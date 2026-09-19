@@ -1,0 +1,38 @@
+name: Tests
+
+# Required status check backing branch protection on main/alpha/beta (see
+# CONTRIBUTING.md). This repo ships no PHPUnit suite — every class depends on
+# a running Kintai Core that doesn't exist here — so this only catches PHP
+# syntax errors and malformed manifests, not logic bugs.
+
+on:
+  push:
+    branches: [main, alpha, beta]
+  pull_request:
+    branches: [main, alpha, beta]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Lint PHP syntax
+        run: |
+          set -euo pipefail
+          find src Views -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l routes.php
+
+      - name: Validate JSON manifests
+        run: |
+          set -euo pipefail
+          for f in bundle.json lang/*.json; do
+            jq empty "$f"
+          done
