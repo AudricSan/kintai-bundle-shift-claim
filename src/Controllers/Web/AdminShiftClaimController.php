@@ -170,7 +170,14 @@ final class AdminShiftClaimController
         $holderId = (int) ($shift['user_id'] ?? 0);
         $eligible = array_values(array_diff($this->memberUserIds([$storeId]), [$holderId]));
         if ($eligible !== []) {
-            $this->notifs->notifyMany($eligible, 'open_shift_published', 'notif_open_shift_published_body', [], (int) $shift['id']);
+            $this->notifs->notifyMany(
+                $eligible,
+                'open_shift_published',
+                'notif_open_shift_published_body',
+                $this->shiftReplace($shift),
+                (int) $shift['id'],
+                '/employee/open-shifts'
+            );
         }
 
         return Response::redirect($this->base() . '/admin/open-shifts?success=published');
@@ -190,7 +197,14 @@ final class AdminShiftClaimController
             if (($claim['status'] ?? '') === 'pending') {
                 $this->shiftClaims->save(array_merge($claim, ['status' => 'withdrawn']));
                 $withdrawn++;
-                $this->notifs->notify((int) ($claim['user_id'] ?? 0), 'shift_claim_withdrawn', 'notif_shift_claim_withdrawn_body', [], (int) $shift['id']);
+                $this->notifs->notify(
+                    (int) ($claim['user_id'] ?? 0),
+                    'shift_claim_withdrawn',
+                    'notif_shift_claim_withdrawn_body',
+                    $this->shiftReplace($shift),
+                    (int) $shift['id'],
+                    '/employee/open-shifts'
+                );
             }
         }
         $this->auditLogger->logUpdate($request, 'shift.unpublished', 'shift', (int) $shift['id'], $old, $saved, ['withdrawn' => $withdrawn], (int) ($shift['store_id'] ?? 0) ?: null);
@@ -254,13 +268,27 @@ final class AdminShiftClaimController
                     'resolved_at' => $now,
                     'resolved_by' => $resolver,
                 ]));
-                $this->notifs->notify((int) $other['user_id'], 'shift_claim_rejected', 'notif_shift_claim_rejected_body', [], (int) $shift['id']);
+                $this->notifs->notify(
+                    (int) $other['user_id'],
+                    'shift_claim_rejected',
+                    'notif_shift_claim_rejected_body',
+                    $this->shiftReplace($shift),
+                    (int) $shift['id'],
+                    '/employee/open-shifts'
+                );
             }
         }
 
         $this->auditLogger->logUpdate($request, 'shift_claim.approved', 'shift_claim', (int) $claim['id'], $oldClaim, $savedClaim, [], (int) ($shift['store_id'] ?? 0) ?: null);
 
-        $this->notifs->notify((int) $claim['user_id'], 'shift_claim_approved', 'notif_shift_claim_approved_body', [], (int) $shift['id']);
+        $this->notifs->notify(
+            (int) $claim['user_id'],
+            'shift_claim_approved',
+            'notif_shift_claim_approved_body',
+            $this->shiftReplace($shift),
+            (int) $shift['id'],
+            '/employee/open-shifts'
+        );
 
         return Response::redirect($this->base() . '/admin/open-shifts?success=claim_approved');
     }
@@ -293,8 +321,27 @@ final class AdminShiftClaimController
         ]));
         $this->auditLogger->logUpdate($request, 'shift_claim.rejected', 'shift_claim', (int) $claim['id'], $oldClaim, $savedClaim, [], (int) ($shift['store_id'] ?? 0) ?: null);
 
-        $this->notifs->notify((int) $claim['user_id'], 'shift_claim_rejected', 'notif_shift_claim_rejected_body', [], (int) $shift['id']);
+        $this->notifs->notify(
+            (int) $claim['user_id'],
+            'shift_claim_rejected',
+            'notif_shift_claim_rejected_body',
+            $this->shiftReplace($shift),
+            (int) $shift['id'],
+            '/employee/open-shifts'
+        );
 
         return Response::redirect($this->base() . '/admin/open-shifts?success=claim_rejected');
+    }
+
+    /** Valeurs de remplacement (:date/:start/:end/:store) pour les notifications de bourse aux shifts. */
+    private function shiftReplace(array $shift): array
+    {
+        $store = $this->stores->findById((int) ($shift['store_id'] ?? 0));
+        return [
+            'date'  => $shift['shift_date'] ?? '',
+            'start' => substr($shift['start_time'] ?? '', 0, 5),
+            'end'   => substr($shift['end_time'] ?? '', 0, 5),
+            'store' => $store['name'] ?? '',
+        ];
     }
 }
