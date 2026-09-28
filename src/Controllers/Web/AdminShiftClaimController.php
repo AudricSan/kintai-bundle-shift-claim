@@ -170,7 +170,7 @@ final class AdminShiftClaimController
         $holderId = (int) ($shift['user_id'] ?? 0);
         $eligible = array_values(array_diff($this->memberUserIds([$storeId]), [$holderId]));
         if ($eligible !== []) {
-            $this->notifs->notifyMany($eligible, 'open_shift_published', 'Un shift est disponible à la bourse aux shifts.', [], (int) $shift['id']);
+            $this->notifs->notifyMany($eligible, 'open_shift_published', 'notif_open_shift_published_body', [], (int) $shift['id']);
         }
 
         return Response::redirect($this->base() . '/admin/open-shifts?success=published');
