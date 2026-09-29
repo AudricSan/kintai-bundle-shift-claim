@@ -8,6 +8,8 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-29
+
 ### Fixed
 
 - `publishShift()` passait une phrase française codée en dur comme clé de traduction du corps de la notification `open_shift_published`, au lieu d'une vraie clé — jamais traduite en/ja. Utilise désormais `notif_open_shift_published_body`, ajoutée côté Kintai Core.
