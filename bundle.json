@@ -4,7 +4,7 @@
     "version": "1.1.0",
     "description": "Publication de shifts ouverts, candidatures des employés, approbation par un manager.",
     "author": { "name": "AudricSan", "url": "https://github.com/AudricSan" },
-    "kintai_core": { "min": "0.1.0", "max": "999.999.999" },
+    "kintai_core": { "min": "0.3.0", "max": "999.999.999" },
     "requires_bundles": {},
     "namespace": "kintai\\Bundles\\Installed\\ShiftClaim",
     "entry_class": "kintai\\Bundles\\Installed\\ShiftClaim\\ShiftClaimBundle",
