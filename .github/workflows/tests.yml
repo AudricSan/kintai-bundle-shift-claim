@@ -36,3 +36,15 @@ jobs:
           for f in bundle.json lang/*.json; do
             jq empty "$f"
           done
+
+      # Kintai envoie `script-src 'self' 'nonce-…'` : un attribut onclick=/onchange=/…, un lien javascript: ou un
+      # <script> sans nonce est bloqué par le navigateur, en silence (rien ne casse côté serveur, donc aucun autre
+      # test ne l'attrape). Voir « Content Security Policy » dans docs/creating-a-bundle.md du dépôt Kintai.
+      - name: No inline event handlers or nonce-less scripts (Kintai CSP)
+        run: |
+          set -euo pipefail
+          paths=$(ls -d Views src 2>/dev/null || true)
+          if grep -rnE "[[:space:]]on(click|change|submit|input|load|error|focus|blur|dblclick|keyup|keydown)[[:space:]]*=|['\"]on(click|change|submit|input)['\"][[:space:]]*=>|(href|src|action)[[:space:]]*=[[:space:]]*[\"']javascript:|<script>" $paths; then
+            echo "::error::Inline handlers, javascript: URLs and <script> without nonce are blocked by Kintai's CSP. Use data-on-click / data-confirm / data-submit-on-change, and <script nonce=\"...\">."
+            exit 1
+          fi

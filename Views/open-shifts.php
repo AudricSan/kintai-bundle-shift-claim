@@ -120,7 +120,7 @@ echo $shiftsTable
                 . '<a href="' . htmlspecialchars($BASE_URL . '/admin/shifts/' . $id . '/edit') . '" class="btn btn--ghost btn--sm">' . __('edit') . '</a>'
                 . '<form method="POST" action="' . htmlspecialchars($BASE_URL . '/admin/shifts/' . $id . '/unpublish') . '" class="form-inline">'
                 . csrf_field()
-                . '<button type="submit" class="btn btn--ghost btn--sm" onclick="return confirm(\'' . __('confirm') . '\')">' . __('close_bourse') . '</button>'
+                . '<button type="submit" class="btn btn--ghost btn--sm" data-confirm="' . htmlspecialchars(__('confirm'), ENT_QUOTES) . '">' . __('close_bourse') . '</button>'
                 . '</form></div>';
         }
         $status = $s['_my_claim']['status'] ?? null;
@@ -128,7 +128,7 @@ echo $shiftsTable
             return '<form method="POST" action="' . $BASE_URL . '/employee/open-shifts/' . $id . '/claim" class="form-inline">' . csrf_field() . Button::make(__('claim_shift'))->primary()->sm()->submit()->render() . '</form>';
         }
         if ($status === 'pending') {
-            return '<form method="POST" action="' . $BASE_URL . '/employee/open-shifts/' . $id . '/withdraw" class="form-inline" onsubmit="return confirm(\'' . __('confirm_cancel_request') . '\')">' . csrf_field() . Button::make(__('withdraw'))->ghost()->sm()->submit()->render() . '</form>';
+            return '<form method="POST" action="' . $BASE_URL . '/employee/open-shifts/' . $id . '/withdraw" class="form-inline" data-confirm="' . htmlspecialchars(__('confirm_cancel_request'), ENT_QUOTES) . '">' . csrf_field() . Button::make(__('withdraw'))->ghost()->sm()->submit()->render() . '</form>';
         }
         return '<span class="text-sm-muted">—</span>';
     })
