@@ -134,7 +134,7 @@ final class EmployeeShiftClaimController
             'store_id' => $shift['store_id'] ?? null,
         ], (int) ($shift['store_id'] ?? 0) ?: null);
 
-        $this->notifyManagers((int) ($shift['store_id'] ?? 0), 'shift_claim_submitted', 'notif_shift_claim_pending_body', $shiftId);
+        $this->notifyManagers((int) ($shift['store_id'] ?? 0), $shift, $userId, $shiftId);
 
         return Response::redirect($this->base() . '/employee/open-shifts?success=claimed');
     }
@@ -158,8 +158,8 @@ final class EmployeeShiftClaimController
         return Response::redirect($this->base() . '/employee/open-shifts?success=withdrawn');
     }
 
-    /** Notifie les membres du store détenant open_shifts.approve (candidats à une décision). */
-    private function notifyManagers(int $storeId, string $type, string $bodyKey, int $referenceId): void
+    /** Notifie les membres du store détenant open_shifts.approve (candidature à décider). */
+    private function notifyManagers(int $storeId, array $shift, int $claimantId, int $referenceId): void
     {
         $recipients = [];
         foreach ($this->storeUsers->findByStore($storeId) as $m) {
@@ -169,8 +169,28 @@ final class EmployeeShiftClaimController
                 $recipients[] = $uid;
             }
         }
-        if ($recipients !== []) {
-            $this->notifs->notifyMany($recipients, $type, $bodyKey, [], $referenceId);
+        if ($recipients === []) {
+            return;
         }
+
+        $store        = $this->stores->findById($storeId);
+        $claimant     = $this->users->findById($claimantId);
+        $claimantName = trim(($claimant['last_name'] ?? '') . ' ' . ($claimant['first_name'] ?? ''));
+        $claimantName = $claimantName !== '' ? $claimantName : ('#' . $claimantId);
+
+        $this->notifs->notifyMany(
+            $recipients,
+            'shift_claim_submitted',
+            'notif_shift_claim_pending_body',
+            [
+                'author' => $claimantName,
+                'date'   => $shift['shift_date'] ?? '',
+                'start'  => substr($shift['start_time'] ?? '', 0, 5),
+                'end'    => substr($shift['end_time'] ?? '', 0, 5),
+                'store'  => $store['name'] ?? '',
+            ],
+            $referenceId,
+            '/admin/open-shifts'
+        );
     }
 }
