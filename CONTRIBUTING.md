@@ -35,6 +35,13 @@ same terms.
   PR descriptions, docs) in English
 - Never use inline `style="..."` in `Views/*.php` — they're rendered inside
   Kintai's own layout and should follow the host app's CSS conventions
+- No inline event handlers (`onclick=`, `onchange=`, `onsubmit=`, `oninput=`…), no `javascript:` links and no
+  `<script>` without a nonce in `Views/*.php` or `src/` — Kintai's Content-Security-Policy
+  (`script-src 'self' 'nonce-…'`, Kintai Core 0.3.0+) blocks them **silently**: the control just does nothing and
+  the server sees no error. Use `data-on-click` / `data-on-change` / `data-args`, `data-submit-on-change`,
+  `data-confirm` and `data-stop-propagation` (handled by the Core's `csp-actions.js`), and
+  `<script nonce="<?= csp_nonce() ?>">` for an inline script that is really needed. Reference:
+  [Content Security Policy](https://github.com/AudricSan/Kintai/blob/develop/docs/creating-a-bundle.md#content-security-policy-no-inline-scripts) in Kintai's bundle guide. CI (`tests.yml`) fails on a violation.
 
 ## Running Checks Locally
 
@@ -45,6 +52,8 @@ Before opening a PR, run what CI runs:
 find src Views -name '*.php' -print0 | xargs -0 -n1 php -l
 php -l routes.php
 for f in bundle.json lang/*.json; do jq empty "$f"; done
+# No inline handlers / javascript: / nonce-less <script> (Kintai's CSP would block them silently)
+! grep -rnE "[[:space:]]on(click|change|submit|input|load|error|focus|blur|dblclick|keyup|keydown)[[:space:]]*=|['\"]on(click|change|submit|input)['\"][[:space:]]*=>|(href|src|action)[[:space:]]*=[[:space:]]*[\"']javascript:|<script>" Views src
 ```
 
 Functional testing requires installing the bundle into a real Kintai
