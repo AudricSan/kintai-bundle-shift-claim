@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Fixed
+
+- Sécurité — `POST /api/v1/shift-claims` fusionnait le JSON brut du client dans `save()` (upsert dès qu'un `id` est présent). La route étant en libre-service (`self => user_id`), un employé pouvait poster `status: approved`, `resolved_by`, un `store_id` qui n'est pas le sien ou un `id` pour écraser la candidature d'un collègue. Seuls `shift_id` et `note` sont lus ; le candidat est l'appelant (ou un tiers si `open_shifts.approve` sur le magasin), qui doit être membre du magasin, et le statut initial est `pending`. `PUT` ne modifie plus que le statut et la note (une résolution enregistre son auteur et sa date).
+
 ### Changed
 
 - Compatibilité avec la Content-Security-Policy stricte de Kintai (`script-src 'self' 'nonce-…'`, sans `'unsafe-inline'`) : les 2 attributs d'événements inline des vues (`onclick=`/`onchange=`/`onsubmit=`/`oninput=`) sont remplacés par des attributs `data-*` (`data-on-click`, `data-submit-on-change`, `data-confirm`… gérés par `csp-actions.js` du Core). Sans ce changement, les boutons, sélecteurs et confirmations de ces vues ne font plus rien sous la nouvelle politique, sans aucune erreur visible. **Nécessite Kintai Core 0.3.0 ou plus** (`kintai_core.min`), version qui introduit `csp-actions.js` et la CSP à nonce. `tests.yml` échoue désormais si un handler inline, un lien `javascript:` ou un `<script>` sans nonce réapparaît dans `Views/` ou `src/`.
