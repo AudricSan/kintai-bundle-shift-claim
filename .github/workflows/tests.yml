@@ -47,7 +47,7 @@ jobs:
         working-directory: KintaiBundleDev/kintai-bundle-shift-claim
         run: |
           set -euo pipefail
-          find src Views database tests -name '*.php' -print0 | xargs -0 -n1 php -l
+          for dir in src Views database tests; do if [ -d "$dir" ]; then find "$dir" -name '*.php' -print0 | xargs -0 -r -n1 php -l; fi; done
           php -l routes.php
 
       - name: Validate JSON manifests
