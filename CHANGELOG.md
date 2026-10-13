@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Added
+
+- Socle de tests PHPUnit (composer.json, phpunit.xml) et CI qui l'exécute contre le vrai Core : les tests que le Core faisait tourner sur une copie figée du bundle (fixtures 1.0.0) vivent désormais ici et testent le code réel.
+
 ### Fixed
 
 - Sécurité — `POST /api/v1/shift-claims` fusionnait le JSON brut du client dans `save()` (upsert dès qu'un `id` est présent). La route étant en libre-service (`self => user_id`), un employé pouvait poster `status: approved`, `resolved_by`, un `store_id` qui n'est pas le sien ou un `id` pour écraser la candidature d'un collègue. Seuls `shift_id` et `note` sont lus ; le candidat est l'appelant (ou un tiers si `open_shifts.approve` sur le magasin), qui doit être membre du magasin, et le statut initial est `pending`. `PUT` ne modifie plus que le statut et la note (une résolution enregistre son auteur et sa date).
