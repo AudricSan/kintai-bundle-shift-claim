@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftClaim;
 
+use kintai\Bundles\Installed\ShiftClaim\Providers\PendingClaimsProvider;
 use kintai\Contract\Bundle;
-use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Contract\Container;
+use kintai\Contract\Extension\NavItem;
+use kintai\Contract\Extension\StoreFeature;
 use kintai\Core\Repositories\DatabaseShiftClaimRepository;
+use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
 
 /**
  * ShiftClaimRepositoryInterface reste enregistré par ce bundle, pas par le
@@ -58,5 +62,41 @@ final class ShiftClaimBundle extends Bundle
             ShiftClaimRepositoryInterface::class,
             fn() => new DatabaseShiftClaimRepository()
         );
+    }
+
+    /**
+     * Navigation (contrat 1.1) : entrée(s) de la barre du haut et de la barre mobile.
+     */
+    public function navigation(): array
+    {
+        return [
+            new NavItem('open_shifts', NavItem::REQUESTS, 'open_shifts', 'admin.open_shifts', 'employee.open_shifts',
+                icon: 'plus', activePaths: ['/admin/open-shifts', '/employee/open-shifts'],
+                storeFeature: 'open_shifts', order: 30, mobile: true),
+        ];
+    }
+
+    /**
+     * Catégories de permissions (contrat 1.2), proposées sur la page des rôles.
+     */
+    public function permissions(): array
+    {
+        return ['open_shifts' => ['view', 'publish', 'approve']];
+    }
+
+    /**
+     * Fonctionnalité activable par magasin (contrat 1.3), sur la fiche magasin.
+     */
+    public function storeFeatures(): array
+    {
+        return [new StoreFeature('open_shifts', 'feature_open_shifts', 'feature_open_shifts_desc', '📋', 50)];
+    }
+
+    /**
+     * Demandes en attente (contrat 1.9) : page « Demandes » et compteur du tableau de bord du Core.
+     */
+    public function pendingRequestsProviders(): array
+    {
+        return [new PendingClaimsProvider(Container::getInstance())];
     }
 }
