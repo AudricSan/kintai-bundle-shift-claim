@@ -9,7 +9,7 @@ use kintai\Contract\Data\ShiftRepositoryInterface;
 use kintai\Contract\Data\StoreRepositoryInterface;
 use kintai\Contract\Provider\PendingRequest;
 use kintai\Contract\Provider\PendingRequestsProvider;
-use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Bundles\Installed\ShiftClaim\Repositories\ShiftClaimRepositoryInterface;
 
 /**
  * Candidatures en attente sur la bourse aux shifts, pour la page « Demandes » et le compteur du tableau de bord du
@@ -49,7 +49,8 @@ final class PendingClaimsProvider implements PendingRequestsProvider
             (int) $f['claim']['id'],
             $f['store_id'],
             isset($f['claim']['user_id']) ? (int) $f['claim']['user_id'] : null,
-            (string) ($f['claim']['created_at'] ?? ''),
+            // Date de la candidature : claimed_at existe sur toutes les instances (created_at manque aux plus anciennes).
+            (string) ($f['claim']['claimed_at'] ?? $f['claim']['created_at'] ?? ''),
             [
                 ['label' => 'applicant', 'value' => (int) ($f['claim']['user_id'] ?? 0), 'style' => PendingRequest::USER],
                 ['label' => 'store', 'value' => $f['store_id'], 'style' => PendingRequest::STORE],

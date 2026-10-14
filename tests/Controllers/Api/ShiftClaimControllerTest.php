@@ -12,7 +12,7 @@ use kintai\Core\Exceptions\ForbiddenException;
 use kintai\Core\Exceptions\NotFoundException;
 use kintai\Core\Repositories\RoleAssignmentRepositoryInterface;
 use kintai\Core\Repositories\RoleRepositoryInterface;
-use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Bundles\Installed\ShiftClaim\Repositories\ShiftClaimRepositoryInterface;
 use kintai\Core\Request;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

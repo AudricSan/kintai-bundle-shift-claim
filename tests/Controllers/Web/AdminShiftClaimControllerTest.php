@@ -6,7 +6,7 @@ namespace kintai\Tests\Bundles\ShiftClaim\Controllers\Web;
 
 
 use kintai\Bundles\Installed\ShiftClaim\Controllers\Web\AdminShiftClaimController;
-use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Bundles\Installed\ShiftClaim\Repositories\ShiftClaimRepositoryInterface;
 use kintai\Core\Repositories\ShiftRepositoryInterface;
 use kintai\Core\Repositories\ShiftTypeRepositoryInterface;
 use kintai\Core\Repositories\StoreRepositoryInterface;

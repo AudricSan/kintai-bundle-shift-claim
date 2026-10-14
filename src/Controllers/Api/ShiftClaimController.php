@@ -8,7 +8,7 @@ use kintai\Contract\Http\Paginator;
 use kintai\Contract\Auth\PermissionService;
 use kintai\Contract\Exceptions\ForbiddenException;
 use kintai\Contract\Exceptions\ValidationException;
-use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Bundles\Installed\ShiftClaim\Repositories\ShiftClaimRepositoryInterface;
 use kintai\Contract\Data\StoreUserRepositoryInterface;
 use kintai\Contract\Http\Request;
 use kintai\Contract\Http\Response;
