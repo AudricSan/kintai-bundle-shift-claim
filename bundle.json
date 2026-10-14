@@ -7,7 +7,7 @@
         "name": "AudricSan",
         "url": "https://github.com/AudricSan"
     },
-    "kintai_contract": "^1.0",
+    "kintai_contract": "^1.11",
     "kintai_core": {
         "min": "0.3.6",
         "max": "999.999.999"
