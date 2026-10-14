@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace kintai\Bundles\Installed\ShiftClaim\Controllers\Web;
 
 use kintai\Contract\Auth\PermissionService;
-use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Bundles\Installed\ShiftClaim\Repositories\ShiftClaimRepositoryInterface;
 use kintai\Contract\Data\ShiftRepositoryInterface;
 use kintai\Contract\Data\ShiftTypeRepositoryInterface;
 use kintai\Contract\Data\StoreRepositoryInterface;
