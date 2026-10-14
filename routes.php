@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-use kintai\Core\Middleware\AuthMiddleware;
-use kintai\Core\Middleware\ApiAuthMiddleware;
-use kintai\Core\Middleware\ApiPermissionMiddleware;
-use kintai\Core\Middleware\PermissionMiddleware;
+use kintai\Contract\Http\Middleware\AuthMiddleware;
+use kintai\Contract\Http\Middleware\ApiAuthMiddleware;
+use kintai\Contract\Http\Middleware\ApiPermissionMiddleware;
+use kintai\Contract\Http\Middleware\PermissionMiddleware;
 use kintai\Bundles\Installed\ShiftClaim\Controllers\Web\EmployeeShiftClaimController;
 use kintai\Bundles\Installed\ShiftClaim\Controllers\Web\AdminShiftClaimController;
 use kintai\Bundles\Installed\ShiftClaim\Controllers\Api\ShiftClaimController as ApiShiftClaimController;
 
-/** @var kintai\Core\Router $router */
-/** @var kintai\Core\Container $container */
+/** @var kintai\Contract\Http\Router $router */
+/** @var kintai\Contract\Container $container */
 
 // =============================================================================
 // ShiftClaim — Routes Web (employé)

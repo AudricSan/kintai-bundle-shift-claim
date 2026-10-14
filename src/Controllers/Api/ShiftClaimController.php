@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftClaim\Controllers\Api;
 
-use kintai\Core\Api\Paginator;
-use kintai\Core\Auth\PermissionService;
-use kintai\Core\Exceptions\ForbiddenException;
-use kintai\Core\Exceptions\ValidationException;
+use kintai\Contract\Http\Paginator;
+use kintai\Contract\Auth\PermissionService;
+use kintai\Contract\Exceptions\ForbiddenException;
+use kintai\Contract\Exceptions\ValidationException;
 use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
-use kintai\Core\Repositories\StoreUserRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
+use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
 
 /**
  * Régression (audit RBAC du 11/09/2026) : mêmes correctifs que

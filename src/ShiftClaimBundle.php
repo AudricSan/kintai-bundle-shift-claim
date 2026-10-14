@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftClaim;
 
-use kintai\Core\BundleContract\Bundle;
+use kintai\Contract\Bundle;
 use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
 use kintai\Core\Repositories\DatabaseShiftClaimRepository;
 
@@ -30,7 +30,7 @@ final class ShiftClaimBundle extends Bundle
 
     public function getVersion(): string
     {
-        return '1.1.0';
+        return '1.2.0';
     }
 
     public function getLabel(): string

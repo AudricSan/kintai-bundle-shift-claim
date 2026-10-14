@@ -1,9 +1,9 @@
 <?php
-use kintai\UI\Components\Badge;
-use kintai\UI\Components\Button;
-use kintai\UI\Components\FilterBar;
-use kintai\UI\Components\Table;
-use kintai\UI\Components\Flash;
+use kintai\Contract\View\Components\Badge;
+use kintai\Contract\View\Components\Button;
+use kintai\Contract\View\Components\FilterBar;
+use kintai\Contract\View\Components\Table;
+use kintai\Contract\View\Components\Flash;
 
 /**
  * Bourse aux shifts — partagée admin/manager (can_manage = true) et employé
