@@ -290,6 +290,19 @@ final class AdminShiftClaimController
             '/employee/open-shifts'
         );
 
+        // Shift cédé : son ancien titulaire le perd, il doit le savoir.
+        $formerHolder = (int) ($shift['user_id'] ?? 0);
+        if ($formerHolder > 0 && $formerHolder !== (int) $claim['user_id']) {
+            $this->notifs->notify(
+                $formerHolder,
+                'shift_claim_handed_over',
+                'notif_shift_claim_handed_over_body',
+                $this->shiftReplace($shift),
+                (int) $shift['id'],
+                '/employee/shifts'
+            );
+        }
+
         return Response::redirect($this->base() . '/admin/open-shifts?success=claim_approved');
     }
 

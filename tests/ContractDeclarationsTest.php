@@ -106,6 +106,7 @@ final class ContractDeclarationsTest extends TestCase
             'shift_claim_approved'  => '✓',
             'shift_claim_rejected'  => '✗',
             'shift_claim_withdrawn' => '⊘',
+            'shift_claim_handed_over' => '⇄',
         ], $this->bundle()->notificationTypes());
     }
 
@@ -130,7 +131,8 @@ final class ContractDeclarationsTest extends TestCase
         $keys = ['open_shifts', 'perm_category_open_shifts', 'feature_open_shifts', 'feature_open_shifts_desc', 'pending_claims',
             'no_pending_claims', 'notif_open_shift_published', 'notif_open_shift_published_body', 'notif_shift_claim_submitted',
             'notif_shift_claim_approved', 'notif_shift_claim_approved_body', 'notif_shift_claim_rejected',
-            'notif_shift_claim_rejected_body', 'notif_shift_claim_withdrawn', 'notif_shift_claim_withdrawn_body',
+            'notif_shift_claim_rejected_body', 'notif_shift_claim_withdrawn', 'notif_shift_claim_withdrawn_body', 'notif_shift_claim_handed_over',
+            'notif_shift_claim_handed_over_body', 'error_open_shift_unavailable', 'error_open_shift_own', 'open_shift_yours',
             'audit_shift_published', 'audit_shift_unpublished', 'audit_shift_claim_created', 'audit_shift_claim_withdrawn',
             'audit_shift_claim_approved', 'audit_shift_claim_rejected', 'open_shift_note_label', 'open_shift_note_placeholder',
             'publish_to_bourse', 'close_bourse', 'open_bourse', 'error_claim_not_found'];

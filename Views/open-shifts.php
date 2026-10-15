@@ -52,6 +52,7 @@ if ($_canManage) {
     ])->render();
     echo Flash::fromQuery('error', [
         'already_claimed' => __('already_claimed'), 'forbidden' => __('action_impossible'),
+        'not_found' => __('error_open_shift_unavailable'), 'own_shift' => __('error_open_shift_own'),
     ])->render();
 }
 ?>
@@ -122,6 +123,9 @@ echo $shiftsTable
                 . csrf_field()
                 . '<button type="submit" class="btn btn--ghost btn--sm" data-confirm="' . htmlspecialchars(__('confirm'), ENT_QUOTES) . '">' . __('close_bourse') . '</button>'
                 . '</form></div>';
+        }
+        if (!empty($s['_mine'])) {
+            return '<span class="text-sm-muted">' . __('open_shift_yours') . '</span>';
         }
         $status = $s['_my_claim']['status'] ?? null;
         if ($status === null || $status === 'withdrawn' || $status === 'rejected') {

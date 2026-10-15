@@ -1,4 +1,9 @@
 {
+    "error_open_shift_unavailable": "このシフトは現在募集されていません。",
+    "error_open_shift_own": "自分のシフトには応募できません。",
+    "open_shift_yours": "自分のシフト（募集中）",
+    "notif_shift_claim_handed_over": "シフトが引き継がれました",
+    "notif_shift_claim_handed_over_body": ":date の :start〜:end（:store）のシフトは同僚に引き継がれ、あなたの予定から外れました。",
     "action_impossible": "操作を実行できません。",
     "already_claimed": "このシフトにはすでに応募済みです。",
     "audit_shift_claim_approved": "申請承認",
