@@ -75,7 +75,9 @@ final class ShiftClaimMassAssignmentTest extends TestCase
                 && $d['user_id'] === self::ME
                 && $d['shift_id'] === 8
         ))->willReturn(['id' => 2]);
-        $controller = new ShiftClaimController($repo, $this->permissions, $this->storeUsers);
+        $shifts = $this->createStub(\kintai\Core\Repositories\ShiftRepositoryInterface::class);
+        $shifts->method('findById')->willReturn(['id' => 8, 'store_id' => self::MY_STORE, 'is_open' => 1, 'user_id' => null]);
+        $controller = new ShiftClaimController($repo, $this->permissions, $this->storeUsers, $shifts);
 
         $controller->store($this->request([
             'id' => 1, 'user_id' => self::ME, 'store_id' => self::MY_STORE, 'shift_id' => 8,
