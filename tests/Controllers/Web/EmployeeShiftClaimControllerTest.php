@@ -179,6 +179,36 @@ final class EmployeeShiftClaimControllerTest extends TestCase
         $controller->claimShift($req);
     }
 
+    /** Publier un shift attribué, c'est le céder (audit n°8, B3) : un collègue peut y postuler. */
+    public function testColleagueCanClaimAPublishedAssignedShift(): void
+    {
+        $this->storeUsers->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
+        $this->stores->method('getFeatures')->with(1)->willReturn([]);
+        $this->shifts->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => 5, 'store_id' => 1]);
+        $this->shiftClaims->method('findByUserAndShift')->with(9, 50)->willReturn(null);
+        $this->shiftClaims->expects($this->once())->method('save')->willReturnCallback(fn(array $d) => $d + ['id' => 77]);
+
+        $req = new Request();
+        $req->setAttribute('auth_user', ['id' => 9]);
+        $req->setRouteParams(['id' => '50']);
+
+        $this->assertStringContainsString('success=claimed', $this->controller->claimShift($req)->headers()['Location'] ?? '');
+    }
+
+    public function testHolderCannotClaimOwnPublishedShift(): void
+    {
+        $this->storeUsers->method('findByUser')->with(5)->willReturn([['store_id' => 1, 'user_id' => 5]]);
+        $this->stores->method('getFeatures')->with(1)->willReturn([]);
+        $this->shifts->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => 5, 'store_id' => 1]);
+        $this->shiftClaims->expects($this->never())->method('save');
+
+        $req = new Request();
+        $req->setAttribute('auth_user', ['id' => 5]);
+        $req->setRouteParams(['id' => '50']);
+
+        $this->assertStringContainsString('error=own_shift', $this->controller->claimShift($req)->headers()['Location'] ?? '');
+    }
+
     public function testClaimShiftRejectsAlreadyClaimedShift(): void
     {
         $this->storeUsers->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);

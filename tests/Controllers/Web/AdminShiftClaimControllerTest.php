@@ -238,6 +238,33 @@ final class AdminShiftClaimControllerTest extends TestCase
         $this->assertContains([3, 'shift_claim_rejected'], $notified);
     }
 
+    /** Shift cédé (audit n°8, B3) : à l'approbation, l'ancien titulaire est prévenu qu'il ne l'a plus. */
+    public function testApprovingAHandedOverShiftNotifiesTheFormerHolder(): void
+    {
+        $claim = ['id' => 10, 'shift_id' => 1, 'user_id' => 9, 'status' => 'pending'];
+        $shift = ['id' => 1, 'store_id' => 5, 'is_open' => 1, 'user_id' => 4];
+
+        $this->shiftClaims->method('findById')->with(10)->willReturn($claim);
+        $this->shifts->method('findById')->with(1)->willReturn($shift);
+        $this->shiftClaims->method('findByShift')->with(1)->willReturn([$claim]);
+        $this->shiftClaims->method('approveIfPending')->willReturn(array_merge($claim, ['status' => 'approved']));
+        $this->shifts->method('closeOpenShiftTo')->with(1, 9)->willReturn(array_merge($shift, ['user_id' => 9, 'is_open' => 0]));
+
+        $notified = [];
+        $this->notifs->method('notify')->willReturnCallback(function (int $userId, string $type) use (&$notified) {
+            $notified[] = [$userId, $type];
+        });
+
+        $req = new Request();
+        $req->setAttribute('managed_store_ids', null);
+        $req->setAttribute('auth_user', ['id' => 1]);
+        $req->setRouteParams(['id' => '10']);
+
+        $this->controller->approveShiftClaim($req);
+
+        $this->assertSame([[9, 'shift_claim_approved'], [4, 'shift_claim_handed_over']], $notified);
+    }
+
     /**
      * Régression : deux admins approuvent deux candidatures différentes du même
      * shift en même temps. approveIfPending() modélise la perte de la course sur
