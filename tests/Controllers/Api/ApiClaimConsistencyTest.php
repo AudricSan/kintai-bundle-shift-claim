@@ -90,7 +90,7 @@ final class ApiClaimConsistencyTest extends TestCase
         $shifts->method('findById')->willReturn($shift);
         $shifts->expects($this->once())->method('closeOpenShiftTo')->with(8, self::EMPLOYEE)
             ->willReturn(['user_id' => self::EMPLOYEE, 'is_open' => 0] + $shift);
-        $notifs = $this->createMock(NotificationService::class);
+        $notifs = $this->createStub(NotificationService::class);
         $notified = [];
         $notifs->method('notify')->willReturnCallback(function (int $u, string $type) use (&$notified) {
             $notified[] = [$u, $type];
