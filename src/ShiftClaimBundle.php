@@ -129,6 +129,7 @@ final class ShiftClaimBundle extends Bundle
             'shift_claim_approved'  => '✓',
             'shift_claim_rejected'  => '✗',
             'shift_claim_withdrawn' => '⊘',
+            'shift_claim_handed_over' => '⇄',
         ];
     }
 }

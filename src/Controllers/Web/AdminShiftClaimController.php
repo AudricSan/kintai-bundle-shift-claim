@@ -6,6 +6,7 @@ namespace kintai\Bundles\Installed\ShiftClaim\Controllers\Web;
 
 use kintai\Contract\Exceptions\NotFoundException;
 use kintai\Bundles\Installed\ShiftClaim\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Bundles\Installed\ShiftClaim\Services\ShiftClaimApproval;
 use kintai\Contract\Data\ShiftRepositoryInterface;
 use kintai\Contract\Data\ShiftTypeRepositoryInterface;
 use kintai\Contract\Data\StoreRepositoryInterface;
@@ -232,63 +233,16 @@ final class AdminShiftClaimController
         }
         $this->assertStoreAccess($request, (int) ($shift['store_id'] ?? 0));
 
-        $now      = date('Y-m-d H:i:s');
-        $authUser = $request->getAttribute('auth_user');
-        $resolver = (int) ($authUser['id'] ?? 0);
+        $resolver = (int) ($request->getAttribute('auth_user')['id'] ?? 0);
 
-        // Écritures conditionnelles (WHERE status/is_open porté par l'UPDATE
-        // lui-même, pas par les lectures ci-dessus) : si un autre admin a
-        // approuvé une autre candidature sur ce même shift entre-temps, l'une
-        // des deux écritures échoue proprement au lieu de s'écraser
-        // silencieusement avec l'autre (race condition sur la bourse).
-        $savedClaim = $this->shiftClaims->approveIfPending((int) $claim['id'], $now, $resolver);
-        if ($savedClaim === null) {
+        // Attribution, fermeture de la bourse, refus des autres candidats et notifications : même logique que l'API.
+        [$result, $savedClaim] = (new ShiftClaimApproval($this->shiftClaims, $this->shifts, $this->stores, $this->notifs))
+            ->approve($claim, $shift, $resolver);
+        if ($result !== ShiftClaimApproval::APPROVED) {
             return Response::redirect($this->base() . '/admin/open-shifts?error=already_resolved');
-        }
-
-        // Affecter le shift au candidat retenu, fermer la bourse
-        $updatedShift = $this->shifts->closeOpenShiftTo((int) $shift['id'], (int) $claim['user_id']);
-        if ($updatedShift === null) {
-            // Le shift a été fermé entre-temps par une autre approbation concurrente :
-            // on annule la nôtre pour ne pas laisser une candidature "approved"
-            // orpheline sur un shift attribué à quelqu'un d'autre.
-            $this->shiftClaims->save(array_merge($savedClaim, [
-                'status'      => 'pending',
-                'resolved_at' => null,
-                'resolved_by' => null,
-            ]));
-            return Response::redirect($this->base() . '/admin/open-shifts?error=already_resolved');
-        }
-
-        // Rejeter les autres candidatures encore pending
-        foreach ($this->shiftClaims->findByShift((int) $shift['id']) as $other) {
-            if ((int) $other['id'] !== (int) $claim['id'] && ($other['status'] ?? '') === 'pending') {
-                $this->shiftClaims->save(array_merge($other, [
-                    'status'      => 'rejected',
-                    'resolved_at' => $now,
-                    'resolved_by' => $resolver,
-                ]));
-                $this->notifs->notify(
-                    (int) $other['user_id'],
-                    'shift_claim_rejected',
-                    'notif_shift_claim_rejected_body',
-                    $this->shiftReplace($shift),
-                    (int) $shift['id'],
-                    '/employee/open-shifts'
-                );
-            }
         }
 
         $this->auditLogger->logUpdate($request, 'shift_claim.approved', 'shift_claim', (int) $claim['id'], $oldClaim, $savedClaim, [], (int) ($shift['store_id'] ?? 0) ?: null);
-
-        $this->notifs->notify(
-            (int) $claim['user_id'],
-            'shift_claim_approved',
-            'notif_shift_claim_approved_body',
-            $this->shiftReplace($shift),
-            (int) $shift['id'],
-            '/employee/open-shifts'
-        );
 
         return Response::redirect($this->base() . '/admin/open-shifts?success=claim_approved');
     }

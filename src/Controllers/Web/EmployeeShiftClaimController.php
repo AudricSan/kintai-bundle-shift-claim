@@ -77,6 +77,8 @@ final class EmployeeShiftClaimController
 
         foreach ($openShifts as &$shift) {
             $shift['_my_claim'] = $myClaims[(int) $shift['id']] ?? null;
+            // Son propre shift cédé : visible, mais on ne postule pas à son propre shift.
+            $shift['_mine'] = (int) ($shift['user_id'] ?? 0) === $userId;
         }
         unset($shift);
 
@@ -99,9 +101,13 @@ final class EmployeeShiftClaimController
         $shiftId = (int) $request->param('id');
 
         $shift = $this->shifts->findById($shiftId);
-        // M-2 : is_open requis ET user_id doit être vide (shift réellement non attribué)
-        if ($shift === null || !(int) ($shift['is_open'] ?? 0) || !empty($shift['user_id'])) {
+        // Shift publié requis. Il peut avoir un titulaire : publier un shift attribué, c'est le céder (son titulaire
+        // le garde jusqu'à l'approbation d'un candidat). Le titulaire ne peut pas postuler à son propre shift.
+        if ($shift === null || !(int) ($shift['is_open'] ?? 0)) {
             return Response::redirect($this->base() . '/employee/open-shifts?error=not_found');
+        }
+        if ((int) ($shift['user_id'] ?? 0) === $userId) {
+            return Response::redirect($this->base() . '/employee/open-shifts?error=own_shift');
         }
 
         // Vérifier appartenance au store

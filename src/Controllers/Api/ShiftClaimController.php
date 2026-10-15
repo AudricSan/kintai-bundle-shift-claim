@@ -9,6 +9,8 @@ use kintai\Contract\Auth\PermissionService;
 use kintai\Contract\Exceptions\ForbiddenException;
 use kintai\Contract\Exceptions\ValidationException;
 use kintai\Bundles\Installed\ShiftClaim\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Bundles\Installed\ShiftClaim\Services\ShiftClaimApproval;
+use kintai\Contract\Data\ShiftRepositoryInterface;
 use kintai\Contract\Data\StoreUserRepositoryInterface;
 use kintai\Contract\Http\Request;
 use kintai\Contract\Http\Response;
@@ -38,6 +40,9 @@ final class ShiftClaimController
         private readonly ShiftClaimRepositoryInterface $claims,
         private readonly PermissionService $permissions,
         private readonly StoreUserRepositoryInterface $storeUsers,
+        // Résolus par le conteneur ; facultatifs pour les tests qui ne touchent ni à la création ni à l'approbation.
+        private readonly ?ShiftRepositoryInterface $shifts = null,
+        private readonly ?ShiftClaimApproval $approval = null,
     ) {}
 
     /** GET /api/v1/shift-claims?store_id=X&user_id=Y&shift_id=Z&status=W&page=1&limit=20 */
@@ -61,7 +66,15 @@ final class ShiftClaimController
             $items = $this->claims->findAll();
         }
 
-        $items = $this->permissions->restrictToScope($this->authUser($request), 'open_shifts.view', $items);
+        // Éléments couverts par la permission, PLUS ceux de l'appelant : un employé sans open_shifts.view lit les siens avec
+        // ?user_id=<lui> (règle self de la route). Avant, restrictToScope() vidait toujours sa liste.
+        $authUser  = $this->authUser($request);
+        $authId    = (int) ($authUser['id'] ?? 0);
+        $scopedIds = array_column($this->permissions->restrictToScope($authUser, 'open_shifts.view', $items), 'id');
+        $items     = array_values(array_filter(
+            $items,
+            fn(array $i): bool => in_array($i['id'] ?? null, $scopedIds, true) || (int) ($i['user_id'] ?? 0) === $authId,
+        ));
 
         return Response::json(Paginator::paginate($items, $page, $limit));
     }
@@ -92,6 +105,21 @@ final class ShiftClaimController
             throw new ForbiddenException(__('error_permission_insufficient', ['key' => 'open_shifts.approve']));
         }
 
+        // Mêmes règles que la candidature web (audit n°8) : avant, n'importe quel shift_id était accepté, publié ou
+        // non, d'un autre magasin, déjà attribué au candidat, ou en double.
+        $shiftId = (int) ($body['shift_id'] ?? 0);
+        $shift   = $shiftId > 0 ? $this->shifts()->findById($shiftId) : null;
+        if ($shift === null || !(int) ($shift['is_open'] ?? 0) || (int) ($shift['store_id'] ?? 0) !== $storeId) {
+            throw new ValidationException(['shift_id' => __('error_open_shift_unavailable')]);
+        }
+        if ((int) ($shift['user_id'] ?? 0) === $userId) {
+            throw new ValidationException(['shift_id' => __('error_open_shift_own')]);
+        }
+        $existing = $this->claims->findByUserAndShift($userId, $shiftId);
+        if ($existing !== null && in_array($existing['status'] ?? '', ['pending', 'approved'], true)) {
+            throw new ValidationException(['shift_id' => __('already_claimed')]);
+        }
+
         $data = array_intersect_key($body, array_flip(self::CREATE_FIELDS)) + [
             'user_id'    => $userId,
             'store_id'   => $storeId,
@@ -107,6 +135,18 @@ final class ShiftClaimController
         $claim = $this->requireClaim($request, 'open_shifts.approve');
         $id    = (int) $claim['id'];
         $data = array_intersect_key($request->json() ?? [], array_flip(self::UPDATE_FIELDS)) + ['id' => $id];
+
+        // Approuver = attribuer le shift et fermer la bourse, comme le web (avant : statut changé, shift intact).
+        if (($data['status'] ?? null) === 'approved') {
+            $shift = $this->shifts()->findById((int) ($claim['shift_id'] ?? 0));
+            [$result, $saved] = $shift === null
+                ? [ShiftClaimApproval::ALREADY_RESOLVED, null]
+                : $this->approval()->approve($claim, $shift, (int) ($this->authUser($request)['id'] ?? 0));
+            if ($result !== ShiftClaimApproval::APPROVED) {
+                return Response::json(['error' => __('error_open_shift_unavailable'), 'code' => 'ALREADY_RESOLVED'], 409);
+            }
+            return Response::json($this->claims->findById($id) ?? $saved);
+        }
         // Une résolution est tracée avec son auteur et sa date.
         if (isset($data['status']) && $data['status'] !== 'pending') {
             $data['resolved_by'] = (int) ($this->authUser($request)['id'] ?? 0);
@@ -121,6 +161,16 @@ final class ShiftClaimController
         $claim = $this->requireClaim($request, 'open_shifts.approve');
         $this->claims->delete((int) $claim['id']);
         return Response::empty();
+    }
+
+    private function shifts(): ShiftRepositoryInterface
+    {
+        return $this->shifts ?? throw new \LogicException('ShiftRepositoryInterface requis.');
+    }
+
+    private function approval(): ShiftClaimApproval
+    {
+        return $this->approval ?? throw new \LogicException('ShiftClaimApproval requis.');
     }
 
     private function authUser(Request $request): array
