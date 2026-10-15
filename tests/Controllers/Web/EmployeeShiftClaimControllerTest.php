@@ -20,16 +20,17 @@ use kintai\Core\Services\AuditLogger;
 use kintai\Core\Services\NotificationService;
 use kintai\UI\ViewRenderer;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 final class EmployeeShiftClaimControllerTest extends TestCase
 {
-    private ShiftRepositoryInterface&MockObject $shifts;
-    private StoreRepositoryInterface&MockObject $stores;
-    private StoreUserRepositoryInterface&MockObject $storeUsers;
-    private ShiftClaimRepositoryInterface&MockObject $shiftClaims;
-    private NotificationService&MockObject $notifs;
-    private EmployeeShiftClaimController $controller;
+    private ShiftRepositoryInterface&Stub $shifts;
+    private StoreRepositoryInterface&Stub $stores;
+    private StoreUserRepositoryInterface&Stub $storeUsers;
+    private ShiftClaimRepositoryInterface&Stub $shiftClaims;
+    private NotificationService&Stub $notifs;
+    private ?EmployeeShiftClaimController $controller = null;
 
     protected function setUp(): void
     {
@@ -37,30 +38,38 @@ final class EmployeeShiftClaimControllerTest extends TestCase
         $this->ensureViewFile($viewDir, 'open-shifts');
         $this->ensureViewFile(sys_get_temp_dir(), 'layout.app');
 
-        $view = new ViewRenderer(sys_get_temp_dir());
-        $view->addNamespace('shift-claim', $viewDir);
+        $this->shifts = $this->createStub(ShiftRepositoryInterface::class);
+        $this->stores = $this->createStub(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createStub(StoreUserRepositoryInterface::class);
+        $this->shiftClaims = $this->createStub(ShiftClaimRepositoryInterface::class);
+        $this->notifs = $this->createStub(NotificationService::class);
+    }
 
-        $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
-        $this->stores = $this->createMock(StoreRepositoryInterface::class);
-        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
-        $this->shiftClaims = $this->createMock(ShiftClaimRepositoryInterface::class);
-        $this->notifs = $this->createMock(NotificationService::class);
+    /** Objet testé, construit à la première utilisation : un test peut d'abord remplacer un bouchon par un mock. */
+    private function controller(): EmployeeShiftClaimController
+    {
+        if ($this->controller === null) {
+            $viewDir = sys_get_temp_dir() . '/kintai-shift-claim-views';
+            $view = new ViewRenderer(sys_get_temp_dir());
+            $view->addNamespace('shift-claim', $viewDir);
+            $this->controller = new EmployeeShiftClaimController(
+                $view,
+                $this->shifts,
+                $this->createStub(ShiftTypeRepositoryInterface::class),
+                $this->stores,
+                $this->storeUsers,
+                $this->createStub(UserRepositoryInterface::class),
+                $this->shiftClaims,
+                new AuditLogger(),
+                $this->notifs,
+                new PermissionService(
+                    $this->createStub(RoleAssignmentRepositoryInterface::class),
+                    $this->createStub(RoleRepositoryInterface::class),
+                ),
+            );
+        }
 
-        $this->controller = new EmployeeShiftClaimController(
-            $view,
-            $this->shifts,
-            $this->createMock(ShiftTypeRepositoryInterface::class),
-            $this->stores,
-            $this->storeUsers,
-            $this->createMock(UserRepositoryInterface::class),
-            $this->shiftClaims,
-            new AuditLogger(),
-            $this->notifs,
-            new PermissionService(
-                $this->createMock(RoleAssignmentRepositoryInterface::class),
-                $this->createMock(RoleRepositoryInterface::class),
-            ),
-        );
+        return $this->controller;
     }
 
     protected function tearDown(): void
@@ -71,43 +80,53 @@ final class EmployeeShiftClaimControllerTest extends TestCase
 
     public function testOpenShiftsListsShiftsFromMyStoresWithMyClaimMarked(): void
     {
-        $this->storeUsers->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
-        $this->stores->method('getFeatures')->with(1)->willReturn([]);
-        $this->shifts->method('findOpen')->with(1)->willReturn([
+        $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
+        $this->stores = $this->createMock(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
+        $this->shiftClaims = $this->createMock(ShiftClaimRepositoryInterface::class);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
+        $this->stores->expects($this->atLeastOnce())->method('getFeatures')->with(1)->willReturn([]);
+        $this->shifts->expects($this->atLeastOnce())->method('findOpen')->with(1)->willReturn([
             ['id' => 100, 'shift_date' => '2026-08-01', 'store_id' => 1],
         ]);
         $this->stores->method('findAll')->willReturn([['id' => 1, 'name' => 'Store A']]);
-        $this->shiftClaims->method('findByUser')->with(9)->willReturn([
+        $this->shiftClaims->expects($this->atLeastOnce())->method('findByUser')->with(9)->willReturn([
             ['id' => 5, 'shift_id' => 100, 'status' => 'pending'],
         ]);
 
         $req = new Request();
         $req->setAttribute('auth_user', ['id' => 9]);
 
-        $response = $this->controller->openShifts($req);
+        $response = $this->controller()->openShifts($req);
 
         $this->assertSame(200, $response->status());
     }
 
     public function testOpenShiftsRedirectsWhenFeatureDisabledForStore(): void
     {
-        $this->storeUsers->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
-        $this->stores->method('getFeatures')->with(1)->willReturn(['shifts']);
+        $this->stores = $this->createMock(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
+        $this->stores->expects($this->atLeastOnce())->method('getFeatures')->with(1)->willReturn(['shifts']);
 
         $req = new Request();
         $req->setAttribute('auth_user', ['id' => 9]);
 
-        $response = $this->controller->openShifts($req);
+        $response = $this->controller()->openShifts($req);
 
         $this->assertSame(302, $response->status());
     }
 
     public function testClaimShiftCreatesPendingClaim(): void
     {
-        $this->storeUsers->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
-        $this->stores->method('getFeatures')->with(1)->willReturn([]);
-        $this->shifts->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => null, 'store_id' => 1]);
-        $this->shiftClaims->method('findByUserAndShift')->with(9, 50)->willReturn(null);
+        $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
+        $this->stores = $this->createMock(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
+        $this->shiftClaims = $this->createMock(ShiftClaimRepositoryInterface::class);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
+        $this->stores->expects($this->atLeastOnce())->method('getFeatures')->with(1)->willReturn([]);
+        $this->shifts->expects($this->atLeastOnce())->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => null, 'store_id' => 1]);
+        $this->shiftClaims->expects($this->atLeastOnce())->method('findByUserAndShift')->with(9, 50)->willReturn(null);
 
         $captured = null;
         $this->shiftClaims->method('save')->willReturnCallback(function (array $d) use (&$captured) {
@@ -119,7 +138,7 @@ final class EmployeeShiftClaimControllerTest extends TestCase
         $req->setAttribute('auth_user', ['id' => 9]);
         $req->setRouteParams(['id' => '50']);
 
-        $response = $this->controller->claimShift($req);
+        $response = $this->controller()->claimShift($req);
 
         $this->assertSame(302, $response->status());
         $this->assertSame('pending', $captured['status']);
@@ -128,30 +147,35 @@ final class EmployeeShiftClaimControllerTest extends TestCase
 
     public function testClaimShiftNotifiesManagersWithApprovePermission(): void
     {
-        $this->storeUsers->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
-        $this->stores->method('getFeatures')->with(1)->willReturn([]);
-        $this->shifts->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => null, 'store_id' => 1]);
-        $this->shiftClaims->method('findByUserAndShift')->with(9, 50)->willReturn(null);
+        $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
+        $this->stores = $this->createMock(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
+        $this->shiftClaims = $this->createMock(ShiftClaimRepositoryInterface::class);
+        $this->notifs = $this->createMock(NotificationService::class);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
+        $this->stores->expects($this->atLeastOnce())->method('getFeatures')->with(1)->willReturn([]);
+        $this->shifts->expects($this->atLeastOnce())->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => null, 'store_id' => 1]);
+        $this->shiftClaims->expects($this->atLeastOnce())->method('findByUserAndShift')->with(9, 50)->willReturn(null);
         $this->shiftClaims->method('save')->willReturnCallback(fn(array $d) => $d + ['id' => 77]);
 
-        $this->storeUsers->method('findByStore')->with(1)->willReturn([
+        $this->storeUsers->expects($this->atLeastOnce())->method('findByStore')->with(1)->willReturn([
             ['user_id' => 9],  // le candidat lui-même, sans droit particulier : ne doit pas se notifier lui-même
             ['user_id' => 20], // manager avec open_shifts.approve
         ]);
 
-        $usersRepo = $this->createMock(UserRepositoryInterface::class);
+        $usersRepo = $this->createStub(UserRepositoryInterface::class);
         $usersRepo->method('findById')->willReturnMap([
             [9, ['id' => 9]],
             [20, ['id' => 20]],
         ]);
-        $assignments = $this->createMock(RoleAssignmentRepositoryInterface::class);
+        $assignments = $this->createStub(RoleAssignmentRepositoryInterface::class);
         $assignments->method('findByUser')->willReturnMap([
             [9, []],
             [20, [['id' => 1, 'user_id' => 20, 'role_id' => 2, 'scope_type' => 'store', 'scope_id' => 1]]],
         ]);
         $roles = $this->createMock(RoleRepositoryInterface::class);
-        $roles->method('findById')->with(2)->willReturn(['id' => 2, 'is_system' => 0]);
-        $roles->method('getPermissions')->with(2)->willReturn(['open_shifts.approve']);
+        $roles->expects($this->atLeastOnce())->method('findById')->with(2)->willReturn(['id' => 2, 'is_system' => 0]);
+        $roles->expects($this->atLeastOnce())->method('getPermissions')->with(2)->willReturn(['open_shifts.approve']);
 
         $view = new ViewRenderer(sys_get_temp_dir());
         $view->addNamespace('shift-claim', sys_get_temp_dir() . '/kintai-shift-claim-views');
@@ -159,7 +183,7 @@ final class EmployeeShiftClaimControllerTest extends TestCase
         $controller = new EmployeeShiftClaimController(
             $view,
             $this->shifts,
-            $this->createMock(ShiftTypeRepositoryInterface::class),
+            $this->createStub(ShiftTypeRepositoryInterface::class),
             $this->stores,
             $this->storeUsers,
             $usersRepo,
@@ -182,53 +206,66 @@ final class EmployeeShiftClaimControllerTest extends TestCase
     /** Publier un shift attribué, c'est le céder (audit n°8, B3) : un collègue peut y postuler. */
     public function testColleagueCanClaimAPublishedAssignedShift(): void
     {
-        $this->storeUsers->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
-        $this->stores->method('getFeatures')->with(1)->willReturn([]);
-        $this->shifts->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => 5, 'store_id' => 1]);
-        $this->shiftClaims->method('findByUserAndShift')->with(9, 50)->willReturn(null);
+        $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
+        $this->stores = $this->createMock(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
+        $this->shiftClaims = $this->createMock(ShiftClaimRepositoryInterface::class);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
+        $this->stores->expects($this->atLeastOnce())->method('getFeatures')->with(1)->willReturn([]);
+        $this->shifts->expects($this->atLeastOnce())->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => 5, 'store_id' => 1]);
+        $this->shiftClaims->expects($this->atLeastOnce())->method('findByUserAndShift')->with(9, 50)->willReturn(null);
         $this->shiftClaims->expects($this->once())->method('save')->willReturnCallback(fn(array $d) => $d + ['id' => 77]);
 
         $req = new Request();
         $req->setAttribute('auth_user', ['id' => 9]);
         $req->setRouteParams(['id' => '50']);
 
-        $this->assertStringContainsString('success=claimed', $this->controller->claimShift($req)->headers()['Location'] ?? '');
+        $this->assertStringContainsString('success=claimed', $this->controller()->claimShift($req)->headers()['Location'] ?? '');
     }
 
     public function testHolderCannotClaimOwnPublishedShift(): void
     {
-        $this->storeUsers->method('findByUser')->with(5)->willReturn([['store_id' => 1, 'user_id' => 5]]);
-        $this->stores->method('getFeatures')->with(1)->willReturn([]);
-        $this->shifts->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => 5, 'store_id' => 1]);
+        $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
+        $this->stores = $this->createMock(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
+        $this->shiftClaims = $this->createMock(ShiftClaimRepositoryInterface::class);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findByUser')->with(5)->willReturn([['store_id' => 1, 'user_id' => 5]]);
+        $this->stores->expects($this->atLeastOnce())->method('getFeatures')->with(1)->willReturn([]);
+        $this->shifts->expects($this->atLeastOnce())->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => 5, 'store_id' => 1]);
         $this->shiftClaims->expects($this->never())->method('save');
 
         $req = new Request();
         $req->setAttribute('auth_user', ['id' => 5]);
         $req->setRouteParams(['id' => '50']);
 
-        $this->assertStringContainsString('error=own_shift', $this->controller->claimShift($req)->headers()['Location'] ?? '');
+        $this->assertStringContainsString('error=own_shift', $this->controller()->claimShift($req)->headers()['Location'] ?? '');
     }
 
     public function testClaimShiftRejectsAlreadyClaimedShift(): void
     {
-        $this->storeUsers->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
-        $this->stores->method('getFeatures')->with(1)->willReturn([]);
-        $this->shifts->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => null, 'store_id' => 1]);
-        $this->shiftClaims->method('findByUserAndShift')->with(9, 50)->willReturn(['id' => 1, 'status' => 'pending']);
+        $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
+        $this->stores = $this->createMock(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createMock(StoreUserRepositoryInterface::class);
+        $this->shiftClaims = $this->createMock(ShiftClaimRepositoryInterface::class);
+        $this->storeUsers->expects($this->atLeastOnce())->method('findByUser')->with(9)->willReturn([['store_id' => 1, 'user_id' => 9]]);
+        $this->stores->expects($this->atLeastOnce())->method('getFeatures')->with(1)->willReturn([]);
+        $this->shifts->expects($this->atLeastOnce())->method('findById')->with(50)->willReturn(['id' => 50, 'is_open' => 1, 'user_id' => null, 'store_id' => 1]);
+        $this->shiftClaims->expects($this->atLeastOnce())->method('findByUserAndShift')->with(9, 50)->willReturn(['id' => 1, 'status' => 'pending']);
         $this->shiftClaims->expects($this->never())->method('save');
 
         $req = new Request();
         $req->setAttribute('auth_user', ['id' => 9]);
         $req->setRouteParams(['id' => '50']);
 
-        $response = $this->controller->claimShift($req);
+        $response = $this->controller()->claimShift($req);
 
         $this->assertSame(302, $response->status());
     }
 
     public function testWithdrawShiftClaimSetsWithdrawnStatus(): void
     {
-        $this->shiftClaims->method('findByUserAndShift')->with(9, 50)->willReturn(['id' => 1, 'status' => 'pending', 'shift_id' => 50]);
+        $this->shiftClaims = $this->createMock(ShiftClaimRepositoryInterface::class);
+        $this->shiftClaims->expects($this->atLeastOnce())->method('findByUserAndShift')->with(9, 50)->willReturn(['id' => 1, 'status' => 'pending', 'shift_id' => 50]);
 
         $captured = null;
         $this->shiftClaims->expects($this->once())->method('save')->willReturnCallback(function (array $d) use (&$captured) {
@@ -240,7 +277,7 @@ final class EmployeeShiftClaimControllerTest extends TestCase
         $req->setAttribute('auth_user', ['id' => 9]);
         $req->setRouteParams(['id' => '50']);
 
-        $response = $this->controller->withdrawShiftClaim($req);
+        $response = $this->controller()->withdrawShiftClaim($req);
 
         $this->assertSame(302, $response->status());
         $this->assertSame('withdrawn', $captured['status']);
