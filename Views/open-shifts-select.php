@@ -1,7 +1,7 @@
 <?php
-use kintai\UI\Components\Button;
-use kintai\UI\Components\Table;
-use kintai\UI\Components\Flash;
+use kintai\Contract\View\Components\Button;
+use kintai\Contract\View\Components\Table;
+use kintai\Contract\View\Components\Flash;
 
 /** @var array[] $shifts     shifts assignés, à venir, non publiés */
 /** @var array   $users_map  uid → nom */
