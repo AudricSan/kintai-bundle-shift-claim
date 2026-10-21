@@ -10,6 +10,8 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ### Changed
 
+- Notifications : ouvrir la bourse aux shifts ne marque plus comme lues les notifications de planning du Core (shift assigné ou modifié) portant le même identifiant de shift. Les types renvoyés vers la bourse (`open_shift_published`, `shift_claim_submitted`, `shift_claim_rejected`, `shift_claim_withdrawn`) désignent maintenant l'objet `open_shift`, propre au bundle ; `shift_claim_approved` et `shift_claim_handed_over`, renvoyés vers la vue jour du shift, gardent `shift` et sont marquées lues par le Core à l'ouverture de cette vue. Les notifications déjà envoyées gardent l'ancien objet et restent simplement non marquées automatiquement.
+
 - Notifications (contrat 1.23, `kintai_contract` `^1.23`) : les six types sont déclarés au format enrichi (catégories « planning » et « requests », e-mail par défaut pour les décisions et le shift cédé, `reference_type` `shift`). Les liens sont précis : la bourse s'ouvre avec le shift en évidence (`?highlight=`), le candidat retenu et l'ancien titulaire arrivent sur la vue jour du shift, le gestionnaire sur la candidature. Ouvrir la liste des shifts publiés marque comme lues les notifications des shifts affichés.
 
 - Tests : plus aucun avis PHPUnit (28 auparavant) — les doublures sans attente sont des bouchons (`createStub()`), les mocks ne sont créés que dans les tests qui posent une attente, et les vérifications `->with()` sont conservées (`expects($this->atLeastOnce())`, ou `willReturnCallback()` par argument dans les méthodes utilitaires).

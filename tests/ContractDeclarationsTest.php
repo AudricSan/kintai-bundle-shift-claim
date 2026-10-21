@@ -110,8 +110,15 @@ final class ContractDeclarationsTest extends TestCase
         $types = [];
         foreach ($declared as $type => $declaration) {
             $types[$type] = \kintai\Contract\Extension\NotificationType::fromDeclaration($type, $declaration);
-            $this->assertSame('shift', $types[$type]->referenceType, 'l\'identifiant notifié est celui du shift');
             $this->assertTrue($types[$type]->push);
+        }
+        // Renvoyées vers la bourse : objet propre au bundle, pour ne pas lire les notifications de planning du Core.
+        foreach (['open_shift_published', 'shift_claim_submitted', 'shift_claim_rejected', 'shift_claim_withdrawn'] as $onList) {
+            $this->assertSame('open_shift', $types[$onList]->referenceType, $onList);
+        }
+        // Renvoyées vers la vue jour du shift : objet « shift », que le Core marque lu à l'ouverture de cette vue.
+        foreach (['shift_claim_approved', 'shift_claim_handed_over'] as $onDay) {
+            $this->assertSame('shift', $types[$onDay]->referenceType, $onDay);
         }
         $this->assertSame('planning', $types['open_shift_published']->category);
         $this->assertSame('planning', $types['shift_claim_handed_over']->category);

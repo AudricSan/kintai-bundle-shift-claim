@@ -118,7 +118,7 @@ final class AdminShiftClaimController
         // Le gestionnaire voit les shifts publiés : les notifications « candidature à décider » correspondantes sont lues.
         $viewerId = (int) ($request->getAttribute('auth_user')['id'] ?? 0);
         if ($viewerId > 0 && $shiftsWithClaims !== []) {
-            $this->notifs->markReadFor($viewerId, 'shift', array_map(fn($s) => (int) $s['id'], $shiftsWithClaims));
+            $this->notifs->markReadFor($viewerId, 'open_shift', array_map(fn($s) => (int) $s['id'], $shiftsWithClaims));
         }
 
         return Response::html($this->view->render('shift-claim::open-shifts', [
