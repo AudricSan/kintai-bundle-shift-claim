@@ -115,8 +115,15 @@ final class AdminShiftClaimController
             ));
         }
 
+        // Le gestionnaire voit les shifts publiés : les notifications « candidature à décider » correspondantes sont lues.
+        $viewerId = (int) ($request->getAttribute('auth_user')['id'] ?? 0);
+        if ($viewerId > 0 && $shiftsWithClaims !== []) {
+            $this->notifs->markReadFor($viewerId, 'shift', array_map(fn($s) => (int) $s['id'], $shiftsWithClaims));
+        }
+
         return Response::html($this->view->render('shift-claim::open-shifts', [
             'title'              => __('open_shifts'),
+            'highlight_id'       => (int) $request->query('highlight', 0),
             'shifts'             => $shiftsWithClaims,
             'claims'             => $claims,
             'users_map'          => $usersMap,
@@ -177,7 +184,7 @@ final class AdminShiftClaimController
                 'notif_open_shift_published_body',
                 $this->shiftReplace($shift),
                 (int) $shift['id'],
-                '/employee/open-shifts'
+                '/employee/open-shifts?highlight=' . (int) $shift['id']
             );
         }
 
@@ -204,7 +211,7 @@ final class AdminShiftClaimController
                     'notif_shift_claim_withdrawn_body',
                     $this->shiftReplace($shift),
                     (int) $shift['id'],
-                    '/employee/open-shifts'
+                    '/employee/open-shifts?highlight=' . (int) $shift['id']
                 );
             }
         }
@@ -281,7 +288,7 @@ final class AdminShiftClaimController
             'notif_shift_claim_rejected_body',
             $this->shiftReplace($shift),
             (int) $shift['id'],
-            '/employee/open-shifts'
+            '/employee/open-shifts?highlight=' . (int) $shift['id']
         );
 
         return Response::redirect($this->base() . '/admin/open-shifts?success=claim_rejected');

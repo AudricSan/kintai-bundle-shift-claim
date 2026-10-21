@@ -61,18 +61,19 @@ final class ShiftClaimApproval
             if ((int) $other['id'] !== (int) $claim['id'] && ($other['status'] ?? '') === 'pending') {
                 $this->claims->save(array_merge($other, ['status' => 'rejected', 'resolved_at' => $now, 'resolved_by' => $resolverId]));
                 $this->notifs->notify((int) $other['user_id'], 'shift_claim_rejected', 'notif_shift_claim_rejected_body',
-                    $replace, (int) $shift['id'], '/employee/open-shifts');
+                    $replace, (int) $shift['id'], '/employee/open-shifts?highlight=' . (int) $shift['id']);
             }
         }
 
+        // Le shift est désormais le sien : le lien ouvre sa vue jour, où il est mis en évidence.
         $this->notifs->notify((int) $claim['user_id'], 'shift_claim_approved', 'notif_shift_claim_approved_body',
-            $replace, (int) $shift['id'], '/employee/open-shifts');
+            $replace, (int) $shift['id'], '/employee/shifts/day?start=' . (string) ($shift['shift_date'] ?? '') . '&highlight=' . (int) $shift['id']);
 
         // Shift cédé : son ancien titulaire le perd, il doit le savoir.
         $formerHolder = (int) ($shift['user_id'] ?? 0);
         if ($formerHolder > 0 && $formerHolder !== (int) $claim['user_id']) {
             $this->notifs->notify($formerHolder, 'shift_claim_handed_over', 'notif_shift_claim_handed_over_body',
-                $replace, (int) $shift['id'], '/employee/shifts');
+                $replace, (int) $shift['id'], '/employee/shifts/day?start=' . (string) ($shift['shift_date'] ?? '') . '&highlight=' . (int) $shift['id']);
         }
 
         return [self::APPROVED, $saved];

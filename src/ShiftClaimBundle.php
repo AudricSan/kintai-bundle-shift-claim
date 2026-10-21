@@ -119,17 +119,19 @@ final class ShiftClaimBundle extends Bundle
     }
 
     /**
-     * Types de notification (contrat 1.7).
+     * Types de notification, au format enrichi (contrat 1.23) : catégorie « planning » pour la bourse aux shifts,
+     * « requests » pour les candidatures. L'identifiant passé à notify() est toujours celui du shift (reference_type
+     * « shift », le même que les notifications de planning du Core).
      */
     public function notificationTypes(): array
     {
         return [
-            'open_shift_published'  => '📢',
-            'shift_claim_submitted' => '🙋',
-            'shift_claim_approved'  => '✓',
-            'shift_claim_rejected'  => '✗',
-            'shift_claim_withdrawn' => '⊘',
-            'shift_claim_handed_over' => '⇄',
+            'open_shift_published'    => ['icon' => '📢', 'category' => 'planning', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'shift'],
+            'shift_claim_submitted'   => ['icon' => '🙋', 'category' => 'requests', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'shift'],
+            'shift_claim_approved'    => ['icon' => '✓', 'category' => 'requests', 'channels' => ['push' => true, 'email' => true], 'reference_type' => 'shift'],
+            'shift_claim_rejected'    => ['icon' => '✗', 'category' => 'requests', 'channels' => ['push' => true, 'email' => true], 'reference_type' => 'shift'],
+            'shift_claim_withdrawn'   => ['icon' => '⊘', 'category' => 'requests', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'shift'],
+            'shift_claim_handed_over' => ['icon' => '⇄', 'category' => 'planning', 'channels' => ['push' => true, 'email' => true], 'reference_type' => 'shift'],
         ];
     }
 }
