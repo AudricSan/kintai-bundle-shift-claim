@@ -82,8 +82,14 @@ final class EmployeeShiftClaimController
         }
         unset($shift);
 
+        // L'employé voit les shifts publiés : les notifications de bourse correspondantes sont lues.
+        if ($userId > 0 && $openShifts !== []) {
+            $this->notifs->markReadFor($userId, 'shift', array_map(fn($s) => (int) $s['id'], $openShifts));
+        }
+
         return Response::html($this->view->render('shift-claim::open-shifts', [
             'title'      => __('open_shifts'),
+            'highlight_id' => (int) $request->query('highlight', 0),
             'shifts'     => $openShifts,
             'types_map'  => $typesMap,
             'stores_map' => $storesMap,
@@ -196,7 +202,7 @@ final class EmployeeShiftClaimController
                 'store'  => $store['name'] ?? '',
             ],
             $referenceId,
-            '/admin/open-shifts'
+            '/admin/open-shifts?highlight=' . $referenceId
         );
     }
 }

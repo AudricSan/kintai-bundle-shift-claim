@@ -100,14 +100,29 @@ final class ContractDeclarationsTest extends TestCase
 
     public function testNotificationTypes(): void
     {
+        $declared = $this->bundle()->notificationTypes();
         $this->assertSame([
-            'open_shift_published'  => '📢',
-            'shift_claim_submitted' => '🙋',
-            'shift_claim_approved'  => '✓',
-            'shift_claim_rejected'  => '✗',
-            'shift_claim_withdrawn' => '⊘',
-            'shift_claim_handed_over' => '⇄',
-        ], $this->bundle()->notificationTypes());
+            'open_shift_published', 'shift_claim_submitted', 'shift_claim_approved',
+            'shift_claim_rejected', 'shift_claim_withdrawn', 'shift_claim_handed_over',
+        ], array_keys($declared));
+
+        // Chaque déclaration est valide pour le Core (format enrichi du contrat 1.23).
+        $types = [];
+        foreach ($declared as $type => $declaration) {
+            $types[$type] = \kintai\Contract\Extension\NotificationType::fromDeclaration($type, $declaration);
+            $this->assertSame('shift', $types[$type]->referenceType, 'l\'identifiant notifié est celui du shift');
+            $this->assertTrue($types[$type]->push);
+        }
+        $this->assertSame('planning', $types['open_shift_published']->category);
+        $this->assertSame('planning', $types['shift_claim_handed_over']->category);
+        $this->assertSame('requests', $types['shift_claim_submitted']->category);
+        // Les décisions qui concernent le planning de l'employé arrivent aussi par e-mail.
+        foreach (['shift_claim_approved', 'shift_claim_rejected', 'shift_claim_handed_over'] as $decision) {
+            $this->assertTrue($types[$decision]->email, $decision);
+        }
+        foreach (['open_shift_published', 'shift_claim_submitted', 'shift_claim_withdrawn'] as $other) {
+            $this->assertFalse($types[$other]->email, $other);
+        }
     }
 
     /** Le bundle n'apporte rien d'autre au Core. */

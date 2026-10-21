@@ -102,6 +102,30 @@ final class EmployeeShiftClaimControllerTest extends TestCase
         $this->assertSame(200, $response->status());
     }
 
+    /** Ouvrir la liste marque comme lues les notifications des shifts publiés affichés. */
+    public function testOpenShiftsMarksTheNotificationsOfTheDisplayedShiftsAsRead(): void
+    {
+        $this->shifts = $this->createStub(ShiftRepositoryInterface::class);
+        $this->stores = $this->createStub(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createStub(StoreUserRepositoryInterface::class);
+        $this->shiftClaims = $this->createStub(ShiftClaimRepositoryInterface::class);
+        $this->notifs = $this->createMock(NotificationService::class);
+        $this->storeUsers->method('findByUser')->willReturn([['store_id' => 1, 'user_id' => 9]]);
+        $this->stores->method('getFeatures')->willReturn([]);
+        $this->stores->method('findAll')->willReturn([['id' => 1, 'name' => 'Store A']]);
+        $this->shifts->method('findOpen')->willReturn([
+            ['id' => 200, 'shift_date' => '2026-08-02', 'store_id' => 1],
+            ['id' => 100, 'shift_date' => '2026-08-01', 'store_id' => 1],
+        ]);
+        $this->shiftClaims->method('findByUser')->willReturn([]);
+        $this->notifs->expects($this->once())->method('markReadFor')->with(9, 'shift', [100, 200]);
+
+        $req = new Request();
+        $req->setAttribute('auth_user', ['id' => 9]);
+
+        $this->assertSame(200, $this->controller()->openShifts($req)->status());
+    }
+
     public function testOpenShiftsRedirectsWhenFeatureDisabledForStore(): void
     {
         $this->stores = $this->createMock(StoreRepositoryInterface::class);

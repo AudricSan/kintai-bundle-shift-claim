@@ -9,6 +9,7 @@ use kintai\Contract\View\Components\Flash;
  * Bourse aux shifts — partagée admin/manager (can_manage = true) et employé
  * (can_manage = false, ne voit que sa propre candidature).
  *
+ * @var int        $highlight_id        Shift désigné par une notification (0 = aucun)
  * @var array[]    $shifts               Shifts ouverts (enrichis avec _claims en admin, _my_claim en employé)
  * @var array[]    $claims               Candidatures agrégées, filtrables par statut (admin uniquement)
  * @var array      $types_map            id → type
@@ -79,6 +80,7 @@ endif; ?>
 <?php
 $shiftsTable = Table::make()
     ->data($shifts)
+    ->rowAttrs(fn($s) => (int) ($highlight_id ?? 0) > 0 && (int) ($s['id'] ?? 0) === (int) $highlight_id ? ['class' => 'tr--highlight'] : [])
     ->emptyMessage(__('no_open_shift'))
     ->column(__('date'), fn($s) => htmlspecialchars($s['shift_date'] ?? ''))
     ->column(__('schedule'), fn($s) => '<span class="td-mono">' . htmlspecialchars(substr($s['start_time'] ?? '', 0, 5)) . '–' . htmlspecialchars(substr($s['end_time'] ?? '', 0, 5)) . '</span>');
@@ -150,6 +152,7 @@ echo $shiftsTable
     </div>
 <?= Table::make()
     ->data($claims)
+    ->rowAttrs(fn($c) => (int) ($highlight_id ?? 0) > 0 && (int) ($c['_shift']['id'] ?? 0) === (int) $highlight_id ? ['class' => 'tr--highlight'] : [])
     ->emptyMessage(__('no_pending_claims'))
     ->currentSort($claim_sort)
     ->filters(['claim_status' => $claim_status_filter])

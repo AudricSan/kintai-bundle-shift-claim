@@ -106,6 +106,26 @@ final class AdminShiftClaimControllerTest extends TestCase
         $this->assertSame(200, $response->status());
     }
 
+    public function testOpenShiftsMarksTheNotificationsOfTheDisplayedShiftsAsRead(): void
+    {
+        $this->notifs = $this->createMock(NotificationService::class);
+        $this->shiftClaims = $this->createStub(ShiftClaimRepositoryInterface::class);
+        $this->shifts->method('findOpen')->willReturn([
+            ['id' => 1, 'shift_date' => '2026-08-01', 'store_id' => 5],
+            ['id' => 2, 'shift_date' => '2026-08-02', 'store_id' => 5],
+        ]);
+        $this->shiftTypes->method('findAll')->willReturn([]);
+        $this->stores->method('findAll')->willReturn([['id' => 5, 'name' => 'Store A']]);
+        $this->shiftClaims->method('findByShift')->willReturn([]);
+        $this->notifs->expects($this->once())->method('markReadFor')->with(4, 'shift', [1, 2]);
+
+        $req = new Request();
+        $req->setAttribute('managed_store_ids', null);
+        $req->setAttribute('auth_user', ['id' => 4]);
+
+        $this->assertSame(200, $this->controller()->openShifts($req)->status());
+    }
+
     public function testSelectShiftToPublishListsOnlyUpcomingUnpublishedAssignedShifts(): void
     {
         $today = date('Y-m-d');
