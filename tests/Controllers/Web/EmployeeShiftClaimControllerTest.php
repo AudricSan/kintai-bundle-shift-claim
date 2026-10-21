@@ -118,7 +118,7 @@ final class EmployeeShiftClaimControllerTest extends TestCase
             ['id' => 100, 'shift_date' => '2026-08-01', 'store_id' => 1],
         ]);
         $this->shiftClaims->method('findByUser')->willReturn([]);
-        $this->notifs->expects($this->once())->method('markReadFor')->with(9, 'shift', [100, 200]);
+        $this->notifs->expects($this->once())->method('markReadFor')->with(9, 'open_shift', [100, 200]);
 
         $req = new Request();
         $req->setAttribute('auth_user', ['id' => 9]);

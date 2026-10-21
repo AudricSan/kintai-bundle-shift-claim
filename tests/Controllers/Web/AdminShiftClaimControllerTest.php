@@ -117,7 +117,7 @@ final class AdminShiftClaimControllerTest extends TestCase
         $this->shiftTypes->method('findAll')->willReturn([]);
         $this->stores->method('findAll')->willReturn([['id' => 5, 'name' => 'Store A']]);
         $this->shiftClaims->method('findByShift')->willReturn([]);
-        $this->notifs->expects($this->once())->method('markReadFor')->with(4, 'shift', [1, 2]);
+        $this->notifs->expects($this->once())->method('markReadFor')->with(4, 'open_shift', [1, 2]);
 
         $req = new Request();
         $req->setAttribute('managed_store_ids', null);

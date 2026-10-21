@@ -84,7 +84,7 @@ final class EmployeeShiftClaimController
 
         // L'employé voit les shifts publiés : les notifications de bourse correspondantes sont lues.
         if ($userId > 0 && $openShifts !== []) {
-            $this->notifs->markReadFor($userId, 'shift', array_map(fn($s) => (int) $s['id'], $openShifts));
+            $this->notifs->markReadFor($userId, 'open_shift', array_map(fn($s) => (int) $s['id'], $openShifts));
         }
 
         return Response::html($this->view->render('shift-claim::open-shifts', [

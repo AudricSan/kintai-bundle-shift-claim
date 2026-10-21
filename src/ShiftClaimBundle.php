@@ -120,17 +120,20 @@ final class ShiftClaimBundle extends Bundle
 
     /**
      * Types de notification, au format enrichi (contrat 1.23) : catégorie « planning » pour la bourse aux shifts,
-     * « requests » pour les candidatures. L'identifiant passé à notify() est toujours celui du shift (reference_type
-     * « shift », le même que les notifications de planning du Core).
+     * « requests » pour les candidatures. L'identifiant passé à notify() est toujours celui du shift, mais l'objet
+     * désigné dépend de la page où l'utilisateur est renvoyé : « open_shift » (propre à ce bundle) pour celles qui
+     * ouvrent la bourse, « shift » (celui des notifications de planning du Core) pour celles qui ouvrent la vue jour
+     * du shift, où le Core les marque lues. Ainsi ouvrir la bourse ne marque pas lues des notifications de planning
+     * (shift assigné, modifié) portant le même identifiant.
      */
     public function notificationTypes(): array
     {
         return [
-            'open_shift_published'    => ['icon' => '📢', 'category' => 'planning', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'shift'],
-            'shift_claim_submitted'   => ['icon' => '🙋', 'category' => 'requests', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'shift'],
+            'open_shift_published'    => ['icon' => '📢', 'category' => 'planning', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'open_shift'],
+            'shift_claim_submitted'   => ['icon' => '🙋', 'category' => 'requests', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'open_shift'],
             'shift_claim_approved'    => ['icon' => '✓', 'category' => 'requests', 'channels' => ['push' => true, 'email' => true], 'reference_type' => 'shift'],
-            'shift_claim_rejected'    => ['icon' => '✗', 'category' => 'requests', 'channels' => ['push' => true, 'email' => true], 'reference_type' => 'shift'],
-            'shift_claim_withdrawn'   => ['icon' => '⊘', 'category' => 'requests', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'shift'],
+            'shift_claim_rejected'    => ['icon' => '✗', 'category' => 'requests', 'channels' => ['push' => true, 'email' => true], 'reference_type' => 'open_shift'],
+            'shift_claim_withdrawn'   => ['icon' => '⊘', 'category' => 'requests', 'channels' => ['push' => true, 'email' => false], 'reference_type' => 'open_shift'],
             'shift_claim_handed_over' => ['icon' => '⇄', 'category' => 'planning', 'channels' => ['push' => true, 'email' => true], 'reference_type' => 'shift'],
         ];
     }
