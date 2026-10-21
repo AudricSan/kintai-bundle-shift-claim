@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Added
+
+- Contrat de bundle 1.24 : `ContractUsageTest` vérifie aussi que le bundle n'appelle que des fonctions globales déclarées par le contrat (`ContractUsageScanner::functionViolations()`).
+
 ### Changed
 
 - Notifications (contrat 1.23, `kintai_contract` `^1.23`) : les six types sont déclarés au format enrichi (catégories « planning » et « requests », e-mail par défaut pour les décisions et le shift cédé, `reference_type` `shift`). Les liens sont précis : la bourse s'ouvre avec le shift en évidence (`?highlight=`), le candidat retenu et l'ancien titulaire arrivent sur la vue jour du shift, le gestionnaire sur la candidature. Ouvrir la liste des shifts publiés marque comme lues les notifications des shifts affichés.
