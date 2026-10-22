@@ -67,7 +67,7 @@ final class ShiftClaimBundle extends Bundle
     public function navigation(): array
     {
         return [
-            new NavItem('open_shifts', NavItem::REQUESTS, 'open_shifts', 'admin.open_shifts', 'employee.open_shifts',
+            new NavItem('open_shifts', NavItem::REQUESTS, 'shift_claim_open_shifts', 'admin.open_shifts', 'employee.open_shifts',
                 icon: 'plus', activePaths: ['/admin/open-shifts', '/employee/open-shifts'],
                 storeFeature: 'open_shifts', order: 30, mobile: true),
         ];
@@ -86,7 +86,7 @@ final class ShiftClaimBundle extends Bundle
      */
     public function storeFeatures(): array
     {
-        return [new StoreFeature('open_shifts', 'feature_open_shifts', 'feature_open_shifts_desc', '📋', 50)];
+        return [new StoreFeature('open_shifts', 'shift_claim_feature_open_shifts', 'shift_claim_feature_open_shifts_desc', '📋', 50)];
     }
 
     /**

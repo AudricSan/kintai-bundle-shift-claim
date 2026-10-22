@@ -33,7 +33,7 @@ final class ContractDeclarationsTest extends TestCase
         $this->assertInstanceOf(NavItem::class, $items[0]);
         $this->assertSame('open_shifts', $items[0]->key);
         $this->assertSame(NavItem::REQUESTS, $items[0]->section);
-        $this->assertSame('open_shifts', $items[0]->label);
+        $this->assertSame('shift_claim_open_shifts', $items[0]->label);
         $this->assertSame('admin.open_shifts', $items[0]->managerRoute);
         $this->assertSame('employee.open_shifts', $items[0]->employeeRoute);
         $this->assertSame('plus', $items[0]->icon);
@@ -55,8 +55,8 @@ final class ContractDeclarationsTest extends TestCase
         $this->assertCount(1, $features);
         $this->assertInstanceOf(StoreFeature::class, $features[0]);
         $this->assertSame('open_shifts', $features[0]->key);
-        $this->assertSame('feature_open_shifts', $features[0]->label);
-        $this->assertSame('feature_open_shifts_desc', $features[0]->description);
+        $this->assertSame('shift_claim_feature_open_shifts', $features[0]->label);
+        $this->assertSame('shift_claim_feature_open_shifts_desc', $features[0]->description);
         $this->assertSame('📋', $features[0]->icon);
         $this->assertSame(50, $features[0]->order);
     }
@@ -68,8 +68,8 @@ final class ContractDeclarationsTest extends TestCase
         $this->assertCount(1, $providers);
         $this->assertInstanceOf(PendingClaimsProvider::class, $providers[0]);
         $this->assertSame('open_shifts', $providers[0]->key());
-        $this->assertSame('pending_claims', $providers[0]->label());
-        $this->assertSame('no_pending_claims', $providers[0]->emptyLabel());
+        $this->assertSame('shift_claim_pending_claims', $providers[0]->label());
+        $this->assertSame('shift_claim_no_pending_claims', $providers[0]->emptyLabel());
         $this->assertSame('open_shifts.view', $providers[0]->permission());
         $this->assertSame('open_shifts', $providers[0]->storeFeature());
         $this->assertSame(30, $providers[0]->order());
@@ -150,14 +150,14 @@ final class ContractDeclarationsTest extends TestCase
     /** Libellés des déclarations, des notifications, du journal d'activité et du formulaire, fournis par le bundle. */
     public function testDeclaredLabelsAreTranslatedByTheBundle(): void
     {
-        $keys = ['open_shifts', 'perm_category_open_shifts', 'feature_open_shifts', 'feature_open_shifts_desc', 'pending_claims',
-            'no_pending_claims', 'notif_open_shift_published', 'notif_open_shift_published_body', 'notif_shift_claim_submitted',
+        $keys = ['shift_claim_open_shifts', 'perm_category_open_shifts', 'shift_claim_feature_open_shifts', 'shift_claim_feature_open_shifts_desc', 'shift_claim_pending_claims',
+            'shift_claim_no_pending_claims', 'notif_open_shift_published', 'notif_open_shift_published_body', 'notif_shift_claim_submitted',
             'notif_shift_claim_approved', 'notif_shift_claim_approved_body', 'notif_shift_claim_rejected',
             'notif_shift_claim_rejected_body', 'notif_shift_claim_withdrawn', 'notif_shift_claim_withdrawn_body', 'notif_shift_claim_handed_over',
-            'notif_shift_claim_handed_over_body', 'error_open_shift_unavailable', 'error_open_shift_own', 'open_shift_yours',
+            'notif_shift_claim_handed_over_body', 'shift_claim_error_open_shift_unavailable', 'shift_claim_error_open_shift_own', 'shift_claim_open_shift_yours',
             'audit_shift_published', 'audit_shift_unpublished', 'audit_shift_claim_created', 'audit_shift_claim_withdrawn',
-            'audit_shift_claim_approved', 'audit_shift_claim_rejected', 'open_shift_note_label', 'open_shift_note_placeholder',
-            'publish_to_bourse', 'close_bourse', 'open_bourse', 'error_claim_not_found'];
+            'audit_shift_claim_approved', 'audit_shift_claim_rejected', 'shift_claim_open_shift_note_label', 'shift_claim_open_shift_note_placeholder',
+            'shift_claim_publish_to_bourse', 'shift_claim_close_bourse', 'shift_claim_open_bourse', 'shift_claim_error_claim_not_found'];
         foreach (['fr', 'en', 'ja'] as $locale) {
             $lang = json_decode((string) file_get_contents(dirname(__DIR__) . "/lang/{$locale}.json"), true);
             foreach ($keys as $key) {

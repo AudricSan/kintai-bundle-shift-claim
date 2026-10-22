@@ -20,8 +20,8 @@ final class PendingClaimsProvider implements PendingRequestsProvider
     public function __construct(private readonly Container $container) {}
 
     public function key(): string { return 'open_shifts'; }
-    public function label(): string { return 'pending_claims'; }
-    public function emptyLabel(): string { return 'no_pending_claims'; }
+    public function label(): string { return 'shift_claim_pending_claims'; }
+    public function emptyLabel(): string { return 'shift_claim_no_pending_claims'; }
     public function permission(): string { return 'open_shifts.view'; }
     public function storeFeature(): ?string { return 'open_shifts'; }
     public function order(): int { return 30; }

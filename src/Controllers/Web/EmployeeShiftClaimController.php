@@ -88,7 +88,7 @@ final class EmployeeShiftClaimController
         }
 
         return Response::html($this->view->render('shift-claim::open-shifts', [
-            'title'      => __('open_shifts'),
+            'title'      => __('shift_claim_open_shifts'),
             'highlight_id' => (int) $request->query('highlight', 0),
             'shifts'     => $openShifts,
             'types_map'  => $typesMap,

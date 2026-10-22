@@ -12,8 +12,8 @@ use kintai\Contract\View\Components\Button;
 $_shiftUrl = $BASE_URL . '/admin/shifts/' . (int) $shift['id'];
 ?>
 <?php if (!(int) ($shift['is_open'] ?? 0)): ?>
-    <?= Button::make(__('publish_to_bourse'))->warning()->submit()->attrs(['formaction' => $_shiftUrl . '/publish', 'formmethod' => 'post', 'formnovalidate' => 'formnovalidate'])->render() ?>
+    <?= Button::make(__('shift_claim_publish_to_bourse'))->warning()->submit()->attrs(['formaction' => $_shiftUrl . '/publish', 'formmethod' => 'post', 'formnovalidate' => 'formnovalidate'])->render() ?>
 <?php else: ?>
-    <?= Button::make(__('close_bourse'))->ghost()->submit()->attrs(['formaction' => $_shiftUrl . '/unpublish', 'formmethod' => 'post', 'formnovalidate' => 'formnovalidate'])->render() ?>
-    <?= Badge::make(__('open_bourse'))->success()->render() ?>
+    <?= Button::make(__('shift_claim_close_bourse'))->ghost()->submit()->attrs(['formaction' => $_shiftUrl . '/unpublish', 'formmethod' => 'post', 'formnovalidate' => 'formnovalidate'])->render() ?>
+    <?= Badge::make(__('shift_claim_open_bourse'))->success()->render() ?>
 <?php endif; ?>
