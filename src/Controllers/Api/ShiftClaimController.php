@@ -110,14 +110,14 @@ final class ShiftClaimController
         $shiftId = (int) ($body['shift_id'] ?? 0);
         $shift   = $shiftId > 0 ? $this->shifts()->findById($shiftId) : null;
         if ($shift === null || !(int) ($shift['is_open'] ?? 0) || (int) ($shift['store_id'] ?? 0) !== $storeId) {
-            throw new ValidationException(['shift_id' => __('error_open_shift_unavailable')]);
+            throw new ValidationException(['shift_id' => __('shift_claim_error_open_shift_unavailable')]);
         }
         if ((int) ($shift['user_id'] ?? 0) === $userId) {
-            throw new ValidationException(['shift_id' => __('error_open_shift_own')]);
+            throw new ValidationException(['shift_id' => __('shift_claim_error_open_shift_own')]);
         }
         $existing = $this->claims->findByUserAndShift($userId, $shiftId);
         if ($existing !== null && in_array($existing['status'] ?? '', ['pending', 'approved'], true)) {
-            throw new ValidationException(['shift_id' => __('already_claimed')]);
+            throw new ValidationException(['shift_id' => __('shift_claim_already_claimed')]);
         }
 
         $data = array_intersect_key($body, array_flip(self::CREATE_FIELDS)) + [
@@ -143,7 +143,7 @@ final class ShiftClaimController
                 ? [ShiftClaimApproval::ALREADY_RESOLVED, null]
                 : $this->approval()->approve($claim, $shift, (int) ($this->authUser($request)['id'] ?? 0));
             if ($result !== ShiftClaimApproval::APPROVED) {
-                return Response::json(['error' => __('error_open_shift_unavailable'), 'code' => 'ALREADY_RESOLVED'], 409);
+                return Response::json(['error' => __('shift_claim_error_open_shift_unavailable'), 'code' => 'ALREADY_RESOLVED'], 409);
             }
             return Response::json($this->claims->findById($id) ?? $saved);
         }
@@ -186,7 +186,7 @@ final class ShiftClaimController
             fn(int $id) => $this->claims->findById($id),
             (int) $request->param('id'),
             $permissionKey,
-            notFoundMessage: __('error_claim_not_found'),
+            notFoundMessage: __('shift_claim_error_claim_not_found'),
         );
     }
 }

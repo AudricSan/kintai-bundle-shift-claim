@@ -122,7 +122,7 @@ final class AdminShiftClaimController
         }
 
         return Response::html($this->view->render('shift-claim::open-shifts', [
-            'title'              => __('open_shifts'),
+            'title'              => __('shift_claim_open_shifts'),
             'highlight_id'       => (int) $request->query('highlight', 0),
             'shifts'             => $shiftsWithClaims,
             'claims'             => $claims,
@@ -156,7 +156,7 @@ final class AdminShiftClaimController
         usort($shifts, fn($a, $b) => strcmp($a['shift_date'] ?? '', $b['shift_date'] ?? ''));
 
         return Response::html($this->view->render('shift-claim::open-shifts-select', [
-            'title'      => __('select_shift_to_publish'),
+            'title'      => __('shift_claim_select_shift_to_publish'),
             'shifts'     => $shifts,
             'users_map'  => $this->shiftService->getUsersMap(),
             'stores_map' => $this->buildStoresMap($managedIds),
@@ -223,7 +223,7 @@ final class AdminShiftClaimController
     {
         $claim = $this->shiftClaims->findById((int) $request->param('id'));
         if ($claim === null) {
-            throw new NotFoundException(__('error_claim_not_found'));
+            throw new NotFoundException(__('shift_claim_error_claim_not_found'));
         }
         $oldClaim = $claim;
         // C-2 : guard statut pending
@@ -258,7 +258,7 @@ final class AdminShiftClaimController
     {
         $claim = $this->shiftClaims->findById((int) $request->param('id'));
         if ($claim === null) {
-            throw new NotFoundException(__('error_claim_not_found'));
+            throw new NotFoundException(__('shift_claim_error_claim_not_found'));
         }
         $oldClaim = $claim;
         // M-3 : guard statut pending
