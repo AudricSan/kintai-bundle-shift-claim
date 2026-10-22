@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Added
+
+- Contrat de bundle 1.24 : `ContractUsageTest` vérifie aussi que le bundle n'appelle que des fonctions globales déclarées par le contrat (`ContractUsageScanner::functionViolations()`).
+
 ### Changed
 
 - Notifications : ouvrir la bourse aux shifts ne marque plus comme lues les notifications de planning du Core (shift assigné ou modifié) portant le même identifiant de shift. Les types renvoyés vers la bourse (`open_shift_published`, `shift_claim_submitted`, `shift_claim_rejected`, `shift_claim_withdrawn`) désignent maintenant l'objet `open_shift`, propre au bundle ; `shift_claim_approved` et `shift_claim_handed_over`, renvoyés vers la vue jour du shift, gardent `shift` et sont marquées lues par le Core à l'ouverture de cette vue. Les notifications déjà envoyées gardent l'ancien objet et restent simplement non marquées automatiquement.

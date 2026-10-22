@@ -25,4 +25,14 @@ final class ContractUsageTest extends TestCase
             self::PENDING_EXTRACTION,
         ));
     }
+
+    /** Seules les fonctions globales déclarées par le contrat (src/Contract/functions.php du Core) sont appelées. */
+    public function testOnlyTheContractFunctionsAreCalled(): void
+    {
+        $root = dirname(__DIR__);
+
+        $this->assertSame([], ContractUsageScanner::functionViolations(
+            [$root . '/src', $root . '/Views', $root . '/routes.php', $root . '/database'],
+        ));
+    }
 }
