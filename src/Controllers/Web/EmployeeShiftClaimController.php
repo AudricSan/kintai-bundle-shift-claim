@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftClaim\Controllers\Web;
 
-use kintai\Core\Auth\PermissionService;
-use kintai\Core\Repositories\ShiftClaimRepositoryInterface;
-use kintai\Core\Repositories\ShiftRepositoryInterface;
-use kintai\Core\Repositories\ShiftTypeRepositoryInterface;
-use kintai\Core\Repositories\StoreRepositoryInterface;
-use kintai\Core\Repositories\StoreUserRepositoryInterface;
-use kintai\Core\Repositories\UserRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
-use kintai\Core\Services\AuditLogger;
-use kintai\Core\Services\NotificationService;
-use kintai\UI\Controller\Web\HasBaseUrl;
-use kintai\UI\Controller\Web\HasStoreFeatureCheck;
-use kintai\UI\ViewRenderer;
+use kintai\Contract\Auth\PermissionService;
+use kintai\Bundles\Installed\ShiftClaim\Repositories\ShiftClaimRepositoryInterface;
+use kintai\Contract\Data\ShiftRepositoryInterface;
+use kintai\Contract\Data\ShiftTypeRepositoryInterface;
+use kintai\Contract\Data\StoreRepositoryInterface;
+use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Data\UserRepositoryInterface;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
+use kintai\Contract\Services\AuditLogger;
+use kintai\Contract\Services\NotificationService;
+use kintai\Contract\Http\Concerns\HasBaseUrl;
+use kintai\Contract\Http\Concerns\HasStoreFeatureCheck;
+use kintai\Contract\View\ViewRenderer;
 
 final class EmployeeShiftClaimController
 {
@@ -77,11 +77,19 @@ final class EmployeeShiftClaimController
 
         foreach ($openShifts as &$shift) {
             $shift['_my_claim'] = $myClaims[(int) $shift['id']] ?? null;
+            // Son propre shift cédé : visible, mais on ne postule pas à son propre shift.
+            $shift['_mine'] = (int) ($shift['user_id'] ?? 0) === $userId;
         }
         unset($shift);
 
+        // L'employé voit les shifts publiés : les notifications de bourse correspondantes sont lues.
+        if ($userId > 0 && $openShifts !== []) {
+            $this->notifs->markReadFor($userId, 'open_shift', array_map(fn($s) => (int) $s['id'], $openShifts));
+        }
+
         return Response::html($this->view->render('shift-claim::open-shifts', [
-            'title'      => __('open_shifts'),
+            'title'      => __('shift_claim_open_shifts'),
+            'highlight_id' => (int) $request->query('highlight', 0),
             'shifts'     => $openShifts,
             'types_map'  => $typesMap,
             'stores_map' => $storesMap,
@@ -99,9 +107,13 @@ final class EmployeeShiftClaimController
         $shiftId = (int) $request->param('id');
 
         $shift = $this->shifts->findById($shiftId);
-        // M-2 : is_open requis ET user_id doit être vide (shift réellement non attribué)
-        if ($shift === null || !(int) ($shift['is_open'] ?? 0) || !empty($shift['user_id'])) {
+        // Shift publié requis. Il peut avoir un titulaire : publier un shift attribué, c'est le céder (son titulaire
+        // le garde jusqu'à l'approbation d'un candidat). Le titulaire ne peut pas postuler à son propre shift.
+        if ($shift === null || !(int) ($shift['is_open'] ?? 0)) {
             return Response::redirect($this->base() . '/employee/open-shifts?error=not_found');
+        }
+        if ((int) ($shift['user_id'] ?? 0) === $userId) {
+            return Response::redirect($this->base() . '/employee/open-shifts?error=own_shift');
         }
 
         // Vérifier appartenance au store
@@ -190,7 +202,7 @@ final class EmployeeShiftClaimController
                 'store'  => $store['name'] ?? '',
             ],
             $referenceId,
-            '/admin/open-shifts'
+            '/admin/open-shifts?highlight=' . $referenceId
         );
     }
 }
